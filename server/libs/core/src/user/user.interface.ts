@@ -10,5 +10,5 @@ export interface User {
 export interface RegisterUser {
   name: string;
   email: string;
-  encryptedPassword: string;
+  password: string;
 }

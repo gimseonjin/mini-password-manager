@@ -27,4 +27,14 @@ export class UserRepository {
     });
     return !!user;
   }
+
+  async findBy(
+    where: Prisma.userWhereUniqueInput,
+    trx?: DatabaseAdapter,
+  ): Promise<User | null> {
+    const db = trx ?? this.databaseAdapter;
+    return db.user.findUnique({
+      where,
+    });
+  }
 }
