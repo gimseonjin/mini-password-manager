@@ -1,4 +1,4 @@
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -7,7 +7,7 @@ interface User {
   updatedAt: Date;
 }
 
-interface RegisterUser {
+export interface RegisterUser {
   name: string;
   email: string;
   encryptedPassword: string;

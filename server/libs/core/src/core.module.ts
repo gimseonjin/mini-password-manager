@@ -4,5 +4,6 @@ import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [UserModule, DatabaseModule],
+  exports: [UserModule],
 })
-export class AppModule {}
+export class CoreModule {}

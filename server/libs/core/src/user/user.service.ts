@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { UserAlreadyExistsError } from './user.exception';
+import { RegisterUser, User } from './user.interface';
 
 @Injectable()
 export class UserService {
