@@ -3,7 +3,7 @@ import { ApiController } from './api.controller';
 import { CoreModule } from '@app/core';
 import { TerminusModule } from '@nestjs/terminus';
 import { HttpModule } from '@nestjs/axios';
-import { UserController } from './user.controller';
+import { UserController } from './user/user.controller';
 
 @Module({
   imports: [CoreModule, TerminusModule, HttpModule],

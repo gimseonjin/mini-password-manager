@@ -15,8 +15,8 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RegisterUserRequestDto } from './user-register.req';
-import { RegisterUserResponseDto } from './user-register.res';
+import { RegisterUserRequestDto } from './req/user-register.req';
+import { RegisterUserResponseDto } from './res/user-register.res';
 
 @ApiTags('User')
 @Controller('/api/v1/user')
