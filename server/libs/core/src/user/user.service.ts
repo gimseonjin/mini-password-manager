@@ -1,8 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
-import { InvalidPasswordError, UserAlreadyExistsError, UserNotFoundError } from './user.exception';
+import {
+  InvalidPasswordError,
+  UserAlreadyExistsError,
+  UserNotFoundError,
+} from './user.exception';
 import { RegisterUser, User } from './user.interface';
 import { hashValue, verifyHash } from '../util/bcrypt.util';
+
+interface VerifyPassword { 
+  email: string;
+  password: string;
+}
 
 @Injectable()
 export class UserService {
@@ -15,7 +24,7 @@ export class UserService {
    *   - name: 사용자 이름
    *   - email: 사용자 이메일
    *   - password: 사용자 비밀번호
-   * 
+   *
    * @returns 새로 생성된 사용자 정보 객체
    * @throws UserAlreadyExistsError - 이미 존재하는 이메일로 회원가입을 시도
    */
@@ -34,14 +43,15 @@ export class UserService {
 
   /**
    * 비밀번호 일치 여부를 확인한다.
-   * 
-   * @param email - 사용자의 이메일
-   * @param password - 사용자가 입력한 비밀번호
+   *
+   * @param param0 - 비밀번호 검증 정보 객체
+   *   - email: 사용자 이메일
+   *   - password: 사용자 비밀번호
    * @returns 일치하는 경우 사용자 정보 객체를 반환
    * @throws UserNotFoundError - 해당 이메일을 가진 사용자가 존재하지 않는 경우
    *
    */
-  async verifyPassword(email: string, password: string): Promise<User> {
+  async verifyPassword({email, password}: VerifyPassword ): Promise<User> {
     const user = await this.userRepository.findBy({ email });
     if (!user) {
       throw new UserNotFoundError(email);
