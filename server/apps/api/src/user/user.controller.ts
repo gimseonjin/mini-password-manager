@@ -1,5 +1,9 @@
 import { AuthService } from '@app/core/auth/auth.service';
-import { UserAlreadyExistsError } from '@app/core/user/user.exception';
+import {
+  InvalidPasswordError,
+  UserAlreadyExistsError,
+  UserNotFoundError,
+} from '@app/core/user/user.exception';
 import { UserService } from '@app/core/user/user.service';
 import {
   Body,
@@ -58,6 +62,50 @@ export class UserController {
       });
     } catch (error) {
       if (error instanceof UserAlreadyExistsError) {
+        throw new ConflictException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @Post('/login')
+  @ApiOperation({
+    summary: '사용자 로그인',
+    description: '사용자를 인증하고 액세스 토큰을 발급한다.',
+  })
+  @ApiBody({ type: RegisterUserRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: '로그인 성공',
+    type: RegisterUserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  async loginUser(
+    @Res() res: Response,
+    @Body() loginUserDto: RegisterUserRequestDto,
+  ): Promise<void> {
+    try {
+      const user = await this.userService.authenticateUser(loginUserDto);
+      const { accessToken, refreshToken } =
+        this.authService.generateAuthTokens(user);
+
+      res.cookie('refreshToken', refreshToken.value, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+      });
+      res.header('Authorization', `Bearer ${accessToken.value}`);
+
+      res.json({
+        id: user.id,
+        name: user.name,
+        accessToken,
+      });
+    } catch (error) {
+      if (
+        error instanceof UserNotFoundError ||
+        error instanceof InvalidPasswordError
+      ) {
         throw new ConflictException(error.message);
       }
       throw error;

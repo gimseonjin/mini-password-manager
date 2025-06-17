@@ -44,6 +44,7 @@ export class UserService {
    *   - password: 사용자 비밀번호
    * @returns 일치하는 경우 사용자 정보 객체를 반환
    * @throws UserNotFoundError - 해당 이메일을 가진 사용자가 존재하지 않는 경우
+   * @throws InvalidPasswordError - 비밀번호가 일치하지 않는 경우
    *
    */
   async authenticateUser({ email, password }: AuthenticateUser): Promise<User> {
