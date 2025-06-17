@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
-import { InvalidPasswordError, UserAlreadyExistsError, UserNotFoundError } from './user.exception';
+import {
+  InvalidPasswordError,
+  UserAlreadyExistsError,
+  UserNotFoundError,
+} from './user.exception';
 import { hashValue } from '../util/bcrypt.util';
 
 const mockUserRepository = {
@@ -81,7 +85,7 @@ describe('UserService', () => {
   it('should verify password successfully', async () => {
     const verifiedUser = await service.verifyPassword({
       email: 'exist@naver.com',
-      password : 'password',
+      password: 'password',
     });
     expect(verifiedUser).toBeDefined();
     expect(verifiedUser.email).toBe('exist@naver.com');
@@ -95,7 +99,7 @@ describe('UserService', () => {
         password: 'password',
       }),
     ).rejects.toThrow(UserNotFoundError);
-  })
+  });
 
   it('should throw InvalidPasswordError if password is incorrect', async () => {
     await expect(
@@ -103,6 +107,6 @@ describe('UserService', () => {
         email: 'exist@naver.com',
         password: 'wrong-password',
       }),
-    ).rejects.toThrow(InvalidPasswordError);  
-  })
+    ).rejects.toThrow(InvalidPasswordError);
+  });
 });

@@ -8,7 +8,7 @@ import {
 import { RegisterUser, User } from './user.interface';
 import { hashValue, verifyHash } from '../util/bcrypt.util';
 
-interface VerifyPassword { 
+interface VerifyPassword {
   email: string;
   password: string;
 }
@@ -51,7 +51,7 @@ export class UserService {
    * @throws UserNotFoundError - 해당 이메일을 가진 사용자가 존재하지 않는 경우
    *
    */
-  async verifyPassword({email, password}: VerifyPassword ): Promise<User> {
+  async verifyPassword({ email, password }: VerifyPassword): Promise<User> {
     const user = await this.userRepository.findBy({ email });
     if (!user) {
       throw new UserNotFoundError(email);
