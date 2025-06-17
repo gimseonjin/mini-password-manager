@@ -83,7 +83,7 @@ describe('UserService', () => {
   });
 
   it('should verify password successfully', async () => {
-    const verifiedUser = await service.verifyPassword({
+    const verifiedUser = await service.authenticateUser({
       email: 'exist@naver.com',
       password: 'password',
     });
@@ -94,7 +94,7 @@ describe('UserService', () => {
 
   it('should throw UserNotFoundError if user does not exist', async () => {
     await expect(
-      service.verifyPassword({
+      service.authenticateUser({
         email: 'notExist@naver.com',
         password: 'password',
       }),
@@ -103,7 +103,7 @@ describe('UserService', () => {
 
   it('should throw InvalidPasswordError if password is incorrect', async () => {
     await expect(
-      service.verifyPassword({
+      service.authenticateUser({
         email: 'exist@naver.com',
         password: 'wrong-password',
       }),

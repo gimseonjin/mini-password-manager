@@ -5,13 +5,8 @@ import {
   UserAlreadyExistsError,
   UserNotFoundError,
 } from './user.exception';
-import { RegisterUser, User } from './user.interface';
+import { RegisterUser, User, AuthenticateUser } from './user.interface';
 import { hashValue, verifyHash } from '../util/bcrypt.util';
-
-interface VerifyPassword {
-  email: string;
-  password: string;
-}
 
 @Injectable()
 export class UserService {
@@ -42,7 +37,7 @@ export class UserService {
   }
 
   /**
-   * 비밀번호 일치 여부를 확인한다.
+   * 사용자의 비밀번호를 검증하고 인증된 사용자 정보를 반환한다.
    *
    * @param param0 - 비밀번호 검증 정보 객체
    *   - email: 사용자 이메일
@@ -51,7 +46,7 @@ export class UserService {
    * @throws UserNotFoundError - 해당 이메일을 가진 사용자가 존재하지 않는 경우
    *
    */
-  async verifyPassword({ email, password }: VerifyPassword): Promise<User> {
+  async authenticateUser({ email, password }: AuthenticateUser): Promise<User> {
     const user = await this.userRepository.findBy({ email });
     if (!user) {
       throw new UserNotFoundError(email);
