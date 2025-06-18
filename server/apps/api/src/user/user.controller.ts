@@ -16,7 +16,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RegisterUserRequestDto } from './req/user-register.req';
 import { RegisterUserResponseDto } from './res/user-register.res';
 import { JwtGuard } from '../guard/jwt.guard';
@@ -116,7 +122,6 @@ export class UserController {
       throw error;
     }
   }
-
 
   /**
    * 테스트 용 현재 사용자 정보 조회 API
