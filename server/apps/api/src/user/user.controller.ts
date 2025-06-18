@@ -31,6 +31,8 @@ import { JwtGuard } from '../guard/jwt.guard';
 import { Authentication } from '../guard/authentication.decorator';
 import { UserInfo } from '@app/core/auth/auth.interface';
 import { InvalidTokenException } from '@app/core/auth/auth.exception';
+import { LoginUserRequestDto } from './req/user-login.req';
+import { LoginUserResponseDto } from './res/user-login.res';
 
 @ApiTags('User')
 @Controller('/api/v1/user')
@@ -87,16 +89,16 @@ export class UserController {
     summary: '사용자 로그인',
     description: '사용자를 인증하고 액세스 토큰을 발급한다.',
   })
-  @ApiBody({ type: RegisterUserRequestDto })
+  @ApiBody({ type: LoginUserRequestDto })
   @ApiResponse({
     status: 200,
     description: '로그인 성공',
-    type: RegisterUserResponseDto,
+    type: LoginUserResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async loginUser(
     @Res() res: Response,
-    @Body() loginUserDto: RegisterUserRequestDto,
+    @Body() loginUserDto: LoginUserRequestDto,
   ): Promise<void> {
     try {
       const user = await this.userService.authenticateUser(loginUserDto);

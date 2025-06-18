@@ -1,7 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ApiModule } from './api.module';
 import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  DocumentBuilder,
+  SwaggerCustomOptions,
+  SwaggerModule,
+} from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
@@ -16,7 +20,10 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  const options: SwaggerCustomOptions = {
+    raw: ['json'],
+  };
+  SwaggerModule.setup('api-docs', app, document, options);
 
   await app.listen(process.env.port ?? 3000);
 }
