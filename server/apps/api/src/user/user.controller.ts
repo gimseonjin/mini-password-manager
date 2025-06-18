@@ -9,14 +9,19 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   Injectable,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterUserRequestDto } from './req/user-register.req';
 import { RegisterUserResponseDto } from './res/user-register.res';
+import { JwtGuard } from '../guard/jwt.guard';
+import { Authentication } from '../guard/authentication.decorator';
+import { UserInfo } from '@app/core/auth/auth.interface';
 
 @ApiTags('User')
 @Controller('/api/v1/user')
@@ -110,5 +115,32 @@ export class UserController {
       }
       throw error;
     }
+  }
+
+
+  /**
+   * 테스트 용 현재 사용자 정보 조회 API
+   */
+  @UseGuards(JwtGuard)
+  @Get('/me')
+  @ApiOperation({
+    summary: '현재 사용자 정보 조회',
+    description: '인증된 사용자의 정보를 반환한다.',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: '사용자 정보 조회 성공',
+    type: RegisterUserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: '인증 실패' })
+  async getCurrentUser(@Authentication() auth: UserInfo) {
+    const user = auth;
+
+    if (!user) {
+      throw new ConflictException('사용자 정보를 찾을 수 없습니다.');
+    }
+
+    return user;
   }
 }

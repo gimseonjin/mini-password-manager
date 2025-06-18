@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { AuthTokens, JwtExpiresIn, Token, UserInfo } from './auth.interface';
+import { InvalidTokenException } from './auth.exception';
 
 @Injectable()
 export class AuthService {
@@ -34,6 +35,25 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  /**
+   * JWT 토큰을 검증하고 사용자 정보를 반환합니다.
+   *
+   * @param token - JWT 토큰 문자열
+   * @returns UserInfo 객체
+   *   - id: 사용자 ID
+   *   - email: 사용자 이메일
+   * @throws InvalidTokenException - 유효하지 않은 토큰인 경우
+   */
+  verifyToken(token: string): UserInfo {
+    try {
+      const secretKey = process.env.JWT_SECRET || 'defaultSecretKey';
+
+      return jwt.verify(token, secretKey) as UserInfo;
+    } catch (error) {
+      throw new InvalidTokenException('유효하지 않은 토큰입니다.');
+    }
   }
 
   private generateToken(payload: object, expiresIn: JwtExpiresIn): Token {
