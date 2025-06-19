@@ -1,0 +1,497 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# React + TypeScript 프로젝트 아키텍처 가이드
+
+## 📁 폴더 구조
+
+```
+src/
+├── components/         # 재사용 가능한 UI 컴포넌트
+│   └── Sample.tsx
+├── pages/             # 페이지 컴포넌트 (라우트별)
+│   └── HomePage.tsx
+├── hooks/             # 커스텀 훅
+│   └── useCounter.ts
+├── context/           # Context API (전역 상태)
+│   └── AppContext.tsx
+├── services/          # API 서비스 및 외부 서비스
+│   └── api.ts
+├── utils/             # 유틸리티 함수
+│   └── helpers.ts
+├── types/             # TypeScript 타입 정의
+│   ├── api.ts
+│   ├── user.ts
+│   └── index.ts
+├── styles/            # 글로벌 스타일
+│   └── globals.css
+├── App.tsx            # 루트 컴포넌트
+├── App.css
+├── main.tsx          # 진입점
+└── index.css
+```
+
+## 🏗️ 아키텍처 원칙
+
+### 1. 컴포넌트 분리 원칙
+- **components/**: 재사용 가능한 UI 컴포넌트
+- **pages/**: 라우트별 페이지 컴포넌트
+- **types/**: TypeScript 타입 정의 중앙 관리
+- 한 컴포넌트는 하나의 책임만 가져야 함
+
+### 2. 상태 관리
+- **로컬 상태**: `useState<T>`, `useReducer<State, Action>` 사용
+- **전역 상태**: Context API 또는 상태 관리 라이브러리 사용
+- **서버 상태**: React Query, SWR 등 고려
+- **타입 안전성**: 모든 상태에 적절한 타입 정의
+
+### 3. 데이터 흐름
+- Props down, Events up 원칙
+- 단방향 데이터 플로우 유지
+- 타입 안전한 props 전달
+
+## 📋 개발 규칙
+
+### 🔤 네이밍 컨벤션
+
+#### 파일명
+- **컴포넌트**: PascalCase (예: `UserProfile.tsx`)
+- **훅**: camelCase + use 접두사 (예: `useCounter.ts`)
+- **유틸리티**: camelCase (예: `helpers.ts`)
+- **타입**: PascalCase (예: `UserTypes.ts`)
+- **상수**: SCREAMING_SNAKE_CASE (예: `API_ENDPOINTS.ts`)
+
+#### 변수/함수명
+- **변수**: camelCase (예: `userName`)
+- **상수**: SCREAMING_SNAKE_CASE (예: `API_BASE_URL`)
+- **함수**: camelCase (예: `handleClick`)
+- **이벤트 핸들러**: handle + 동작 (예: `handleSubmit`)
+- **타입/인터페이스**: PascalCase (예: `UserProfile`, `ApiResponse`)
+
+#### 컴포넌트 props
+- **Boolean props**: is/has/can 접두사 (예: `isLoading`, `hasError`)
+- **이벤트 props**: on + 동작 (예: `onClick`, `onSubmit`)
+
+### 🎯 코딩 규칙
+
+#### 컴포넌트 작성 규칙
+```tsx
+// 1. import 순서
+import React from 'react' // React 관련
+import { useState, useEffect } from 'react'
+import { someUtility } from '../utils' // 내부 모듈
+import { UserProfile } from '../types' // 타입 import
+import './Component.css' // 스타일
+
+// 2. 타입 정의
+interface ComponentProps {
+  user: UserProfile
+  isLoading?: boolean
+  onSubmit: (data: FormData) => void
+}
+
+interface FormData {
+  name: string
+  email: string
+}
+
+// 3. 컴포넌트 선언
+function ComponentName({ user, isLoading = false, onSubmit }: ComponentProps) {
+  // 4. 상태 훅 사용 (타입 명시)
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: ''
+  })
+  
+  // 5. 이벤트 핸들러 (타입 안전)
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    onSubmit(formData)
+  }
+  
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+  
+  // 6. 렌더링
+  return (
+    <div className="component-name">
+      <form onSubmit={handleSubmit}>
+        <input
+          name="name"
+          value={formData.name}
+          onChange={handleInputChange}
+          disabled={isLoading}
+        />
+        <input
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          disabled={isLoading}
+        />
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? '처리중...' : '제출'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// 7. export
+export default ComponentName
+```
+
+#### Reducer 작성 규칙 (타입 안전)
+```ts
+// types/appTypes.ts
+export interface AppState {
+  user: User | null
+  isLoading: boolean
+  error: string | null
+  posts: Post[]
+}
+
+export type AppAction =
+  | { type: 'SET_USER'; payload: User }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string }
+  | { type: 'ADD_POST'; payload: Post }
+  | { type: 'CLEAR_ERROR' }
+
+export interface User {
+  id: string
+  name: string
+  email: string
+}
+
+export interface Post {
+  id: string
+  title: string
+  content: string
+  userId: string
+}
+
+// reducers/appReducer.ts
+import { AppState, AppAction } from '../types/appTypes'
+
+export const initialState: AppState = {
+  user: null,
+  isLoading: false,
+  error: null,
+  posts: []
+}
+
+export function appReducer(state: AppState, action: AppAction): AppState {
+  switch (action.type) {
+    case 'SET_USER':
+      return {
+        ...state,
+        user: action.payload,
+        error: null
+      }
+    
+    case 'SET_LOADING':
+      return {
+        ...state,
+        isLoading: action.payload
+      }
+    
+    case 'SET_ERROR':
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false
+      }
+    
+    case 'ADD_POST':
+      return {
+        ...state,
+        posts: [...state.posts, action.payload]
+      }
+    
+    case 'CLEAR_ERROR':
+      return {
+        ...state,
+        error: null
+      }
+    
+    default:
+      return state
+  }
+}
+```
+
+#### 훅 작성 규칙
+```ts
+// hooks/useCounter.ts
+interface UseCounterReturn {
+  count: number
+  increment: () => void
+  decrement: () => void
+  reset: () => void
+}
+
+export function useCounter(initialValue: number = 0): UseCounterReturn {
+  const [count, setCount] = useState<number>(initialValue)
+  
+  const increment = useCallback(() => {
+    setCount(prev => prev + 1)
+  }, [])
+  
+  const decrement = useCallback(() => {
+    setCount(prev => prev - 1)
+  }, [])
+  
+  const reset = useCallback(() => {
+    setCount(initialValue)
+  }, [initialValue])
+  
+  return {
+    count,
+    increment,
+    decrement,
+    reset
+  }
+}
+```
+
+#### Context 작성 규칙
+```tsx
+// context/AppContext.tsx
+import React, { createContext, useContext, useReducer, ReactNode } from 'react'
+import { appReducer, initialState } from '../reducers/appReducer'
+import { AppState, AppAction } from '../types/appTypes'
+
+interface AppContextType {
+  state: AppState
+  dispatch: React.Dispatch<AppAction>
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined)
+
+interface AppProviderProps {
+  children: ReactNode
+}
+
+export function AppProvider({ children }: AppProviderProps) {
+  const [state, dispatch] = useReducer(appReducer, initialState)
+  
+  return (
+    <AppContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AppContext.Provider>
+  )
+}
+
+// 커스텀 훅으로 Context 사용
+export function useAppContext(): AppContextType {
+  const context = useContext(AppContext)
+  if (context === undefined) {
+    throw new Error('useAppContext must be used within an AppProvider')
+  }
+  return context
+}
+```
+
+### 🎨 스타일링 규칙
+
+#### CSS 클래스명
+- **BEM 방법론** 사용 권장
+- **컴포넌트명-요소명** 패턴
+```css
+.user-profile { /* 블록 */ }
+.user-profile__avatar { /* 요소 */ }
+.user-profile--active { /* 수정자 */ }
+```
+
+#### 부트스트랩 사용시
+- 커스텀 스타일은 별도 CSS 파일로 분리
+- 부트스트랩 클래스와 커스텀 클래스 혼용 금지
+- 필요시 CSS 변수 활용
+
+### 📦 폴더별 상세 규칙
+
+#### `/components`
+- 재사용 가능한 UI 컴포넌트만 위치
+- 비즈니스 로직 최소화
+- props 인터페이스 정의 필수
+
+#### `/pages`
+- 라우트별 페이지 컴포넌트
+- 비즈니스 로직 포함 가능
+- 여러 컴포넌트 조합
+
+#### `/hooks`
+- 커스텀 훅만 위치
+- 재사용 가능한 로직 분리
+- 'use' 접두사 필수
+- 반환 타입 인터페이스 정의
+
+#### `/context`
+- 전역 상태 관리
+- Provider 컴포넌트와 커스텀 훅 쌍으로 구성
+- 큰 상태는 여러 Context로 분리
+- 타입 안전한 Context 구현
+
+#### `/services`
+- API 호출 함수
+- 외부 서비스 연동
+- 비즈니스 로직 포함 가능
+- API 응답 타입 정의
+
+#### `/utils`
+- 순수 함수들
+- 프로젝트 전반에서 사용 가능한 헬퍼 함수
+- 사이드 이펙트 없는 함수들
+- 제네릭 타입 활용
+
+#### `/types`
+- 프로젝트 전체에서 사용하는 타입 정의
+- 도메인별로 파일 분리
+- 재사용 가능한 공통 타입
+
+### 🔧 TypeScript 설정
+
+#### tsconfig.json 권장 설정
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/types/*": ["./src/types/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+### ⚡ 성능 최적화 규칙
+
+1. **React.memo** 사용으로 불필요한 리렌더링 방지
+2. **useCallback, useMemo** 적절히 사용 (타입 안전성 유지)
+3. **코드 스플리팅** 고려 (React.lazy, Suspense)
+4. **이미지 최적화** (WebP, 적절한 크기)
+5. **타입스크립트 컴파일 최적화** 고려
+
+### 🔧 코드 품질 관리
+
+#### ESLint 규칙 (TypeScript)
+```json
+{
+  "extends": [
+    "@typescript-eslint/recommended",
+    "@typescript-eslint/recommended-requiring-type-checking"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-explicit-any": "error"
+  }
+}
+```
+
+#### Git 커밋 메시지
+```
+feat: 새로운 기능 추가
+fix: 버그 수정
+docs: 문서 수정
+style: 코드 포맷팅
+refactor: 코드 리팩토링
+test: 테스트 추가
+chore: 기타 작업
+types: 타입 정의 수정
+```
+
+### 📱 반응형 디자인 규칙
+
+#### 브레이크포인트
+```css
+/* Mobile: 320px ~ 767px */
+@media (max-width: 767px) { }
+
+/* Tablet: 768px ~ 1023px */
+@media (min-width: 768px) and (max-width: 1023px) { }
+
+/* Desktop: 1024px ~ */
+@media (min-width: 1024px) { }
+```
+
+#### 모바일 퍼스트 접근
+- 작은 화면부터 디자인
+- 점진적 향상 (Progressive Enhancement)
+
+### 🔒 보안 규칙
+
+1. **환경변수** 사용으로 민감 정보 보호
+2. **XSS 방지**: dangerouslySetInnerHTML 사용 금지
+3. **타입 안전성**으로 런타임 에러 방지
+4. **HTTPS** 사용 필수
+5. **의존성** 정기적 업데이트
+
+### 🧪 테스트 규칙
+
+#### 테스트 종류
+- **Unit Test**: 개별 함수/컴포넌트
+- **Integration Test**: 컴포넌트 간 상호작용
+- **E2E Test**: 전체 사용자 플로우
+- **Type Test**: 타입 정의 검증
+
+#### 테스트 파일명
+- `ComponentName.test.tsx`
+- `utils.test.ts`
+- `types.test.ts`
+
+#### 타입 안전한 테스트
+```tsx
+// ComponentName.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react'
+import { UserProfile } from '../types'
+import ComponentName from './ComponentName'
+
+const mockUser: UserProfile = {
+  id: '1',
+  name: 'Test User',
+  email: 'test@example.com'
+}
+
+const mockOnSubmit = jest.fn()
+
+test('컴포넌트가 올바르게 렌더링된다', () => {
+  render(
+    <ComponentName 
+      user={mockUser} 
+      onSubmit={mockOnSubmit}
+    />
+  )
+  
+  expect(screen.getByDisplayValue(mockUser.name)).toBeInTheDocument()
+})
+```
+
+이 가이드를 따라 타입 안전하고 유지보수 가능한 React + TypeScript 애플리케이션을 개발하세요! 🚀 
