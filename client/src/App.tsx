@@ -11,15 +11,30 @@ import { logout, clearAllTokens } from './services/AuthService'
 import { useAuthState } from './hooks/useAuth'
 import SettingsPage from './pages/SettingsPage'
 
+// 로딩 스피너 컴포넌트
+function LoadingSpinner() {
+  return (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <p>인증 확인 중...</p>
+    </div>
+  )
+}
+
 // 로그인 상태 확인 및 보호된 라우트 컴포넌트
 function ProtectedRoutes() {
-  const { isAuthenticated } = useAuthState()
+  const { isAuthenticated, isLoading } = useAuthState()
 
   const handleLogout = () => {
     logout()
     clearAllTokens()
     // 페이지 새로고침으로 상태 초기화
     window.location.href = '/login'
+  }
+
+  // 로딩 중일 때는 스피너 표시
+  if (isLoading) {
+    return <LoadingSpinner />
   }
 
   // 로그인하지 않은 경우 로그인 페이지로 리다이렉트

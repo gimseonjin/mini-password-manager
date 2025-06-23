@@ -33,6 +33,7 @@ import { UserInfo } from '@app/core/auth/auth.interface';
 import { InvalidTokenException } from '@app/core/auth/auth.exception';
 import { LoginUserRequestDto } from './req/user-login.req';
 import { LoginUserResponseDto } from './res/user-login.res';
+import { UserInfoResponseDto } from './res/user-info.res';
 
 @ApiTags('User')
 @Controller('/api/v1/user')
@@ -188,14 +189,21 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: '사용자 정보 조회 성공',
-    type: RegisterUserResponseDto,
+    type: UserInfoResponseDto,
   })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async getCurrentUser(@Authentication() auth: UserInfo) {
-    const user = auth;
+    const { email } = auth;
+    const user = await this.userService.findByEmail(email);
 
     if (!user) throw new ConflictException('사용자 정보를 찾을 수 없습니다.');
 
-    return user;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

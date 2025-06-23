@@ -4,7 +4,6 @@ import {
   loginUser,
   registerUser,
   isLoggedIn,
-  setCachedUser,
 } from '../services/AuthService'
 import { notifyAuthChange } from '../hooks/useAuth'
 import { RegisterUserRequest, LoginUserRequest } from '../types/auth'
@@ -54,13 +53,6 @@ function LoginPage() {
 
         const response = await loginUser(credentials)
 
-        // 사용자 정보를 캐시에 저장
-        setCachedUser({
-          id: response.id,
-          name: response.name,
-          email: formData.email,
-        })
-
         // 인증 상태 변화 알림
         notifyAuthChange()
 
@@ -85,13 +77,6 @@ function LoginPage() {
         }
 
         const response = await registerUser(userData)
-
-        // 사용자 정보를 캐시에 저장
-        setCachedUser({
-          id: response.id,
-          name: response.name,
-          email: formData.email,
-        })
 
         // 인증 상태 변화 알림
         notifyAuthChange()

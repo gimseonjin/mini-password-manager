@@ -78,6 +78,15 @@ export async function registerUser(
     // 토큰 저장
     setAccessToken(response.accessToken.value)
 
+    // 서버에서 최신 유저 정보 가져와서 캐시에 저장
+    try {
+      const userInfo = await getCurrentUser()
+      setCachedUser(userInfo)
+    } catch (userError) {
+      console.error('Failed to fetch user info after registration:', userError)
+      // 유저 정보 가져오기 실패해도 회원가입은 성공으로 처리
+    }
+
     return response
   } catch (error) {
     if (error instanceof ApiRequestError) {
@@ -103,6 +112,15 @@ export async function loginUser(
 
     // 토큰 저장
     setAccessToken(response.accessToken.value)
+
+    // 서버에서 최신 유저 정보 가져와서 캐시에 저장
+    try {
+      const userInfo = await getCurrentUser()
+      setCachedUser(userInfo)
+    } catch (userError) {
+      console.error('Failed to fetch user info after login:', userError)
+      // 유저 정보 가져오기 실패해도 로그인은 성공으로 처리
+    }
 
     return response
   } catch (error) {
