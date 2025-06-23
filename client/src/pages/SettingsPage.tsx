@@ -8,7 +8,6 @@ import {
   hasUserSecretKey,
   saveUserSecretKey,
   generateQRData,
-  generatePDFBackupData,
   downloadPDFBackup,
   parseQRData,
 } from '../services/SettingsService'

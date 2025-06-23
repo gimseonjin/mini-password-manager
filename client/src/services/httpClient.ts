@@ -84,28 +84,4 @@ export async function httpRequest<T>(
   }
 }
 
-// 편의 함수들
-export const httpClient = {
-  // GET 요청
-  get: <T>(endpoint: string): Promise<T> => httpRequest<T>(endpoint),
 
-  // POST 요청
-  post: <T>(endpoint: string, data?: any): Promise<T> =>
-    httpRequest<T>(endpoint, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
-
-  // PUT 요청
-  put: <T>(endpoint: string, data?: any): Promise<T> =>
-    httpRequest<T>(endpoint, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
-
-  // DELETE 요청
-  delete: <T>(endpoint: string): Promise<T> =>
-    httpRequest<T>(endpoint, {
-      method: 'DELETE',
-    }),
-}

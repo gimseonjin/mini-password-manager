@@ -3,9 +3,9 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import KeySetupPage from './pages/KeySetupPage'
