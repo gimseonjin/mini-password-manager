@@ -8,8 +8,6 @@ function HomePage() {
   const user = getCachedUser()
 
   useEffect(() => {
-    console.log('isLoggedIn', isLoggedIn())
-    
     if (!isLoggedIn()) {
       navigate('/login')
     }

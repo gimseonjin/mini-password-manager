@@ -13,6 +13,7 @@ import {
   setAccessToken,
   removeAccessToken,
 } from './httpClient'
+import { removeUserSecretKey, performLoginKeyCleanup } from './SettingsService'
 
 // 유저 정보 캐시 키
 const USER_CACHE_KEY = 'user_cache'
@@ -82,6 +83,11 @@ export async function registerUser(
     try {
       const userInfo = await getCurrentUser()
       setCachedUser(userInfo)
+      
+      // 회원가입 시에도 키 정리 수행 (기존 레거시 키 등 정리)
+      if (userInfo.id) {
+        performLoginKeyCleanup(userInfo.id)
+      }
     } catch (userError) {
       console.error('Failed to fetch user info after registration:', userError)
       // 유저 정보 가져오기 실패해도 회원가입은 성공으로 처리
@@ -117,6 +123,11 @@ export async function loginUser(
     try {
       const userInfo = await getCurrentUser()
       setCachedUser(userInfo)
+      
+      // 로그인 성공 시 키 정리 수행
+      if (userInfo.id) {
+        performLoginKeyCleanup(userInfo.id)
+      }
     } catch (userError) {
       console.error('Failed to fetch user info after login:', userError)
       // 유저 정보 가져오기 실패해도 로그인은 성공으로 처리
@@ -189,6 +200,15 @@ export async function getCurrentUser(): Promise<AuthUser> {
 }
 
 export function logout(): void {
+  // 현재 사용자 정보 가져오기
+  const cachedUser = getCachedUser()
+  
+  // 사용자별 secretkey 삭제
+  if (cachedUser?.id) {
+    removeUserSecretKey(cachedUser.id)
+  }
+  
+  // 토큰 및 캐시 삭제
   clearAllTokens()
 }
 

@@ -51,7 +51,7 @@ function LoginPage() {
           password: formData.password,
         }
 
-        const response = await loginUser(credentials)
+        await loginUser(credentials)
 
         // 인증 상태 변화 알림
         notifyAuthChange()
@@ -76,7 +76,7 @@ function LoginPage() {
           password: formData.password,
         }
 
-        const response = await registerUser(userData)
+        await registerUser(userData)
 
         // 인증 상태 변화 알림
         notifyAuthChange()

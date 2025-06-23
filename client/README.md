@@ -1,169 +1,201 @@
 # 미니 패스워드 매니저 - 클라이언트
 
-React + TypeScript로 구축된 미니 패스워드 매니저의 프론트엔드 애플리케이션입니다.
+## 🔐 보안 우선 비밀번호 관리 툴
 
-## 🚀 주요 기능
+미니 패스워드 매니저는 **클라이언트 측 암호화**를 통해 서버가 사용자의 비밀번호를 알 수 없도록 설계된 보안 우선 비밀번호 관리 도구입니다.
 
-- **사용자 인증**: 회원가입, 로그인, 로그아웃
-- **JWT 토큰 관리**: 자동 토큰 갱신 및 세션 관리
-- **반응형 UI**: 모던하고 직관적인 사용자 인터페이스
-- **타입 안전성**: TypeScript로 개발된 완전한 타입 안전성
+## ✨ 주요 기능
 
-## 🛠️ 기술 스택
+### 🛡️ 클라이언트 측 암호화
+- 모든 비밀번호는 사용자의 기기에서만 암호화/복호화됩니다
+- 서버는 암호화된 데이터만 저장하며, 암호화 키에 접근할 수 없습니다
+- 완전한 Zero-Knowledge 아키텍처
 
-- **Frontend**: React 18, TypeScript
-- **상태 관리**: Context API + useReducer
-- **라우팅**: React Router v6
-- **스타일링**: Bootstrap 5
-- **HTTP 클라이언트**: Fetch API
-- **개발 도구**: Vite
+### 👤 사용자별 키 격리
+- 각 사용자마다 고유한 암호화 키 사용
+- 계정 간 완전한 격리로 보안성 강화
+- 로그아웃 시 해당 사용자의 키 자동 삭제
 
-## 📋 요구사항
+### 📱 멀티 디바이스 지원
+- QR 코드를 통한 간편한 키 동기화
+- 백업 파일 다운로드로 키 복원 가능
+- 새 기기에서 기존 키 가져오기 지원
 
-- Node.js 16.x 이상
-- npm 또는 yarn
-- 실행 중인 백엔드 서버 (기본: http://localhost:3001)
+### 🔄 키 라이프사이클 관리
+- 최초 로그인 시 자동 키 설정 가이드
+- 키 재생성 및 백업 기능
+- 안전한 키 가져오기/내보내기
 
-## 🔧 설치 및 실행
+## 🚀 시작하기
 
-### 1. 의존성 설치
+### 설치
+
 ```bash
 npm install
 ```
 
-### 2. 환경 변수 설정
-프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 추가하세요:
+### 개발 서버 실행
 
-```bash
-# 백엔드 서버 URL
-REACT_APP_API_URL=http://localhost:3001
-```
-
-### 3. 개발 서버 실행
 ```bash
 npm run dev
 ```
 
-애플리케이션이 `http://localhost:5173`에서 실행됩니다.
+## 🔐 보안 아키텍처
 
-## 🌐 API 연동
-
-이 클라이언트는 다음 백엔드 API 엔드포인트와 통신합니다:
-
-### 인증 API
-- `POST /api/v1/user/register` - 사용자 회원가입
-- `POST /api/v1/user/login` - 사용자 로그인  
-- `POST /api/v1/user/refresh` - 토큰 갱신
-- `GET /api/v1/user/me` - 현재 사용자 정보 조회
-
-### 헬스 체크
-- `GET /health` - 서버 상태 확인
-
-## 📁 프로젝트 구조
-
-```
-src/
-├── components/         # 재사용 가능한 UI 컴포넌트
-│   ├── Header.tsx     # 헤더 컴포넌트
-│   └── Sample.jsx     # 샘플 컴포넌트
-├── pages/             # 페이지 컴포넌트
-│   ├── HomePage.tsx   # 홈 페이지
-│   └── LoginPage.tsx  # 로그인/회원가입 페이지
-├── services/          # API 서비스
-│   ├── api.js         # 기본 API 유틸리티
-│   └── authService.ts # 인증 관련 API 서비스
-├── context/           # Context API
-│   └── AppContext.tsx # 전역 상태 관리
-├── types/             # TypeScript 타입 정의
-│   └── auth.ts        # 인증 관련 타입
-├── hooks/             # 커스텀 훅
-├── utils/             # 유틸리티 함수
-├── styles/            # 글로벌 스타일
-├── App.tsx            # 루트 컴포넌트
-└── main.tsx          # 진입점
-```
-
-## 🔐 인증 시스템
-
-### 토큰 관리
-- **Access Token**: API 요청 시 사용되는 JWT 토큰
-- **자동 갱신**: 토큰 만료 시 자동으로 갱신 시도
-- **로컬 스토리지**: 토큰을 브라우저 로컬 스토리지에 안전하게 저장
-
-### 보안 기능
-- JWT Bearer 토큰 인증
-- 자동 토큰 만료 처리
-- 안전한 로그아웃 (토큰 완전 제거)
-- 세션 복원 (페이지 새로고침 시)
-
-## 🎨 UI/UX 특징
-
-- **모던 디자인**: 그라디언트와 블러 효과를 활용한 현대적 디자인
-- **반응형**: 모바일, 태블릿, 데스크톱 모든 디바이스 지원
-- **인터랙티브**: 호버 효과와 부드러운 트랜지션
-- **사용자 친화적**: 직관적인 로그인/회원가입 탭 전환
-- **에러 처리**: 명확한 에러 메시지와 로딩 상태 표시
-
-## 🔄 상태 관리
-
-Context API와 useReducer를 사용한 중앙집중식 상태 관리:
+### 1. 사용자별 키 관리
 
 ```typescript
-interface AppState {
-  user: AuthUser | null      // 현재 로그인한 사용자
-  theme: 'light' | 'dark'   // 테마 설정
-  loading: boolean          // 로딩 상태
-  error: string | null      // 에러 메시지
+// 사용자별 고유 키 생성
+const userKey = generateAndSaveUserSecretKey(userId)
+
+// 사용자별 키 저장 (localStorage)
+const storageKey = `secretKey_user_${userId}`
+localStorage.setItem(storageKey, userKey)
+```
+
+### 2. 키 설정 플로우
+
+1. **로그인 완료** → 키 존재 여부 확인
+2. **키 없음** → KeySetupPage로 자동 이동
+3. **새 키 생성** 또는 **기존 키 가져오기** 선택
+4. **백업 파일 자동 다운로드** (새 키 생성 시)
+5. **키 설정 완료** → 메인 앱 사용 가능
+
+### 3. 키 백업 및 복원
+
+#### 백업 파일 형식
+```
+미니 패스워드 매니저 - 백업 정보
+
+사용자 ID: user123
+사용자 이메일: user@example.com
+생성일: 2024-01-01 12:00:00
+
+비밀키: [64자리 암호화 키]
+
+QR 코드 데이터: {"type":"mini-password-manager","version":"1.0","userId":"user123","secretKey":"...","timestamp":1640995200000}
+
+⚠️ 중요: 이 정보를 안전한 곳에 보관하세요.
+```
+
+#### QR 코드 데이터 구조
+```json
+{
+  "type": "mini-password-manager",
+  "version": "1.0",
+  "userId": "user123",
+  "secretKey": "[암호화키]",
+  "timestamp": 1640995200000
 }
 ```
 
-## 🚨 에러 처리
+## 🛠️ 주요 컴포넌트
 
-- **네트워크 에러**: 연결 실패 시 사용자 친화적 메시지
-- **인증 에러**: 잘못된 자격 증명에 대한 명확한 피드백
-- **폼 검증**: 클라이언트 사이드 입력 검증
-- **서버 에러**: HTTP 상태 코드별 적절한 에러 메시지
+### KeySetupPage
+- 최초 키 설정을 위한 전용 페이지
+- 새 키 생성 또는 기존 키 가져오기 선택
+- 자동 백업 파일 다운로드
+- 단계별 안내 및 오류 처리
 
-## 🧪 개발 가이드
+### SettingsPage
+- 키 관리 및 설정 페이지
+- QR 코드 생성 및 표시
+- 백업 파일 다운로드
+- 키 재생성 (경고 포함)
 
-### 새로운 컴포넌트 추가
-1. `src/components/` 폴더에 `.tsx` 파일 생성
-2. TypeScript 인터페이스로 props 타입 정의
-3. React.memo()를 활용한 성능 최적화 고려
+### AuthService
+- 로그아웃 시 사용자별 키 자동 삭제
+- 토큰 및 캐시 관리
+- 사용자 인증 상태 관리
 
-### API 서비스 확장
-1. `src/types/` 에서 필요한 타입 정의
-2. `src/services/` 에서 API 함수 구현
-3. 에러 처리 및 타입 안전성 보장
+### SettingsService
+- 사용자별 키 생성, 저장, 로드
+- QR 코드 데이터 생성 및 파싱
+- PDF 백업 데이터 생성
+- 키 마스킹 및 보안 함수들
 
-### 상태 관리 확장
-1. `AppContext.tsx`에서 새로운 action 타입 추가
-2. reducer 함수에 새로운 케이스 추가
-3. 컴포넌트에서 dispatch 사용
+## 📊 보안 특징
 
-## 📝 빌드 및 배포
+### Zero-Knowledge 아키텍처
+- 서버는 사용자의 암호화 키를 절대 알 수 없음
+- 모든 암호화/복호화는 클라이언트에서만 수행
+- 서버는 암호화된 데이터만 저장
 
-### 프로덕션 빌드
-```bash
-npm run build
+### 사용자 격리
+- 각 사용자마다 독립적인 암호화 키
+- 계정 전환 시 이전 사용자의 키 자동 삭제
+- 크로스 사용자 데이터 접근 불가
+
+### 키 보안
+- 64자리 랜덤 키 생성
+- 안전한 로컬 스토리지 저장
+- 키 분실 시를 대비한 백업 시스템
+
+## 🔄 업그레이드 가이드
+
+### 기존 사용자 (레거시 키 → 사용자별 키)
+
+기존의 전역 `secretKey`를 사용하던 사용자들은 다음과 같이 마이그레이션됩니다:
+
+1. **자동 감지**: 로그인 시 사용자별 키 존재 여부 확인
+2. **키 설정 페이지**: 키가 없으면 KeySetupPage로 자동 이동
+3. **선택 옵션**:
+   - 새 키 생성 (기존 데이터 손실 가능성 안내)
+   - 기존 키 가져오기 (백업 파일 또는 QR 코드 사용)
+
+### 개발자 가이드
+
+#### 레거시 함수 사용 중단
+```typescript
+// ❌ 사용 중단 예정
+loadSecretKey()
+saveSecretKey(key)
+refreshSecretKey()
+removeSecretKey()
+hasSecretKey()
+
+// ✅ 새로운 함수 사용
+loadUserSecretKey(userId)
+saveUserSecretKey(userId, key)
+generateAndSaveUserSecretKey(userId)
+removeUserSecretKey(userId)
+hasUserSecretKey(userId)
 ```
 
-빌드된 파일은 `dist/` 폴더에 생성됩니다.
+## 🚨 중요 보안 알림
 
-### 배포 전 확인사항
-- [ ] 환경 변수 설정 확인
-- [ ] API 엔드포인트 URL 검증
-- [ ] HTTPS 설정 (프로덕션 환경)
-- [ ] CORS 정책 확인
+### 사용자에게 안내사항
+1. **백업 파일 보관**: 암호화 키 백업 파일을 안전한 곳에 보관하세요
+2. **키 분실 주의**: 키를 분실하면 암호화된 데이터를 복구할 수 없습니다
+3. **QR 코드 보안**: QR 코드 데이터를 타인과 공유하지 마세요
+4. **정기적 백업**: 새 기기 추가 시 백업 파일을 업데이트하세요
+
+### 개발자 주의사항
+1. **키 검증**: QR 코드 가져오기 시 사용자 ID 검증 필수
+2. **에러 처리**: 키 관련 모든 작업에 적절한 에러 처리 구현
+3. **로그 보안**: 키 값이 로그에 노출되지 않도록 주의
+4. **메모리 관리**: 키 사용 후 메모리에서 안전하게 제거
+
+## 📋 TODO
+
+- [ ] QR 코드 스캐너 라이브러리 통합
+- [ ] jsPDF를 사용한 실제 PDF 백업 파일 생성
+- [ ] 키 강도 검증 및 향상
+- [ ] 오프라인 키 백업 옵션
+- [ ] 키 만료 및 자동 갱신 기능
 
 ## 🤝 기여하기
 
-1. 이 저장소를 포크합니다
-2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/AmazingFeature`)
-3. 변경사항을 커밋합니다 (`git commit -m 'Add some AmazingFeature'`)
-4. 브랜치에 푸시합니다 (`git push origin feature/AmazingFeature`)
-5. Pull Request를 생성합니다
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 라이센스
+## 📝 라이선스
 
-이 프로젝트는 MIT 라이센스 하에 배포됩니다.
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
+
+## 🙋‍♂️ 지원
+
+문제가 발생하거나 질문이 있으시면 GitHub Issues를 통해 문의해 주세요.
