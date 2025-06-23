@@ -74,7 +74,24 @@ export async function httpRequest<T>(
       throw new ApiRequestError(response.status, errorMessage)
     }
 
-    return await response.json()
+    // 응답 본문이 비어있는 경우 (204 No Content, 또는 DELETE 요청 등)
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      return null as T
+    }
+
+    // 응답 본문 길이 확인
+    const contentLength = response.headers.get('content-length')
+    if (contentLength === '0') {
+      return null as T
+    }
+
+    try {
+      return await response.json()
+    } catch {
+      // JSON 파싱 실패 시 null 반환 (빈 응답 처리)
+      return null as T
+    }
   } catch (error) {
     if (error instanceof ApiRequestError) {
       throw error

@@ -41,4 +41,63 @@
 @media (max-width: 768px) {
   .hidden-mobile { display: none; }
   .visible-mobile { display: block; }
+}
+
+/* Vault List Styles */
+.vault-item {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.vault-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vault-item.bg-primary {
+  background-color: var(--bs-primary) !important;
+  border-color: var(--bs-primary);
+}
+
+.vault-item.bg-light:hover {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Dropdown Menu Improvements */
+.dropdown-menu {
+  min-width: 120px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Alert Improvements */
+.alert-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .vault-item {
+    padding: 1rem !important;
+  }
+  
+  .vault-item h6 {
+    font-size: 0.95rem;
+  }
 } 

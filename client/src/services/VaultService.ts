@@ -1,6 +1,7 @@
 import {
   CreateVaultRequest,
   CreateVaultResponse,
+  FetchVaultsResponse,
 } from '../types/vault'
 import {
   httpRequest,
@@ -8,6 +9,25 @@ import {
 } from './httpClient'
 
 // Vault API 함수들
+
+/**
+ * 사용자의 모든 Vault 목록을 조회합니다.
+ * @returns Vault 목록
+ */
+export async function getVaults(): Promise<FetchVaultsResponse[]> {
+  try {
+    const response = await httpRequest<FetchVaultsResponse[]>('/api/v1/vaults')
+    
+    return response
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+    }
+    throw error
+  }
+}
 
 /**
  * 새로운 Vault를 생성합니다.
@@ -67,7 +87,7 @@ export async function deleteVault(vaultId: string): Promise<void> {
  */
 export async function deleteAllVaults(): Promise<void> {
   try {
-    await httpRequest<void>('/api/v1/vaults/all', {
+    await httpRequest<void>('/api/v1/vaults', {
       method: 'DELETE',
     })
   } catch (error) {

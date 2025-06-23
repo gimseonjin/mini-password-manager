@@ -21,6 +21,14 @@ export interface Vault {
   updatedAt: string
 }
 
+export interface FetchVaultsResponse {
+  id: string
+  name: string
+  description: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface VaultApiError {
   message: string
   status: number
