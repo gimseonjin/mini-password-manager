@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { CreateVault, Vault } from './vault.interface';
+import {
+  CreateVault,
+  DeleteAllVaults,
+  DeleteVault,
+  GetVaults,
+  Vault,
+} from './vault.interface';
 import { VaultRepository } from './vault.repository';
 import { VaultAlreadyExistsError } from './vault.exception';
-
-interface DeleteVault {
-  vaultId: string;
-  userId: string;
-}
-
-interface DeleteAllVaults {
-  userId: string;
-}
 
 @Injectable()
 export class VaultService {
@@ -46,6 +43,16 @@ export class VaultService {
     };
 
     return this.vaultRepository.create(vault);
+  }
+
+  /**
+   * 사용자의 Vault 목록을 조회한다.
+   *
+   * @param param0 - 사용자 ID
+   * @returns 사용자의 Vault 목록
+   */
+  async getVaults({ userId }: GetVaults): Promise<Vault[]> {
+    return this.vaultRepository.findAllBy({ userId });
   }
 
   /**

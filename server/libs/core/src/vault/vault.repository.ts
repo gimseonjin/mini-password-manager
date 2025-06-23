@@ -87,7 +87,7 @@ export class VaultRepository {
   async findAllBy(
     where: Prisma.vaultWhereInput,
     trx?: DatabaseAdapter,
-  ): Promise<Vault[] | null> {
+  ): Promise<Vault[]> {
     const db = trx ?? this.databaseAdapter;
     const vaults = await db.vault.findMany({
       where,

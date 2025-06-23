@@ -32,3 +32,16 @@ export interface CreateVault {
   vaultName: string;
   description?: string;
 }
+
+export interface DeleteVault {
+  vaultId: string;
+  userId: string;
+}
+
+export interface DeleteAllVaults {
+  userId: string;
+}
+
+export interface GetVaults {
+  userId: string;
+}

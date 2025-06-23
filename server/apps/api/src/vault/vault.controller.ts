@@ -3,6 +3,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  Get,
   Injectable,
   Param,
   Post,
@@ -22,6 +23,7 @@ import { VaultService } from '@app/core/vault/vault.service';
 import { CreateVaultResponseDto } from './res/vault-creation.res';
 import { CreateVaultRequestDto } from './req/vault-creation.req';
 import { VaultAlreadyExistsError } from '@app/core/vault/vault.exception';
+import { FetchVaultsResponseDto } from './res/vault-fetch.res';
 
 @ApiTags('Vault')
 @Controller('/api/v1/vaults')
@@ -102,7 +104,7 @@ export class VaultController {
     await this.vaultService.deleteValut({ vaultId, userId });
   }
 
-  @Delete('all')
+  @Delete()
   @UseGuards(JwtGuard)
   @ApiOperation({
     summary: '모든 Vault 삭제',
@@ -119,5 +121,33 @@ export class VaultController {
   async deleteAllVaults(@Authentication() user: UserInfo): Promise<void> {
     const { id } = user;
     await this.vaultService.deleteAllVaults({ userId: id });
+  }
+
+  @UseGuards(JwtGuard)
+  @Get()
+    @ApiOperation({
+        summary: '사용자의 Vault 목록 조회',
+        description: '사용자의 모든 Vault 목록을 조회합니다.',
+    })
+    @ApiResponse({
+        status: 200,
+        description: '사용자의 Vault 목록이 성공적으로 조회되었습니다.',
+        type: [FetchVaultsResponseDto],
+    })
+    @ApiResponse({
+        status: 401,
+        description: '인증이 필요합니다.',
+    })
+  async getVaults(@Authentication() user: UserInfo): Promise<FetchVaultsResponseDto[]> {
+    const { id } = user;
+    const vaults = await this.vaultService.getVaults({ userId: id });
+    
+    return vaults.map((vault) => ({
+      id: vault.id,
+      name: vault.name,
+      description: vault.description,
+      createdAt: vault.createdAt,
+      updatedAt: vault.updatedAt,
+    }));
   }
 }
