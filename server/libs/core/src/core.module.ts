@@ -6,6 +6,6 @@ import { VaultModule } from './vault/vault.module';
 
 @Module({
   imports: [UserModule, DatabaseModule, AuthModule, VaultModule],
-  exports: [UserModule, DatabaseModule, AuthModule],
+  exports: [UserModule, DatabaseModule, AuthModule, VaultModule],
 })
 export class CoreModule {}
