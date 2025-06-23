@@ -7,14 +7,14 @@ export class UserAlreadyExistsError extends Error {
 
 export class UserNotFoundError extends Error {
   constructor(email: string) {
-    super(`User with email ${email} not found`);
+    super(`해당 이메일을 가진 사용자를 찾을 수 없습니다: ${email}`);
     this.name = 'UserNotFoundError';
   }
 }
 
 export class InvalidPasswordError extends Error {
   constructor() {
-    super('Invalid password');
+    super('비밀번호가 일치하지 않습니다.');
     this.name = 'InvalidPasswordError';
   }
 }
