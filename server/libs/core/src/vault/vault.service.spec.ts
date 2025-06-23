@@ -14,8 +14,8 @@ const mockVaultRepository = {
   existsBy: jest.fn().mockImplementation(async ({ userId, name }) => {
     return userId === '1' && name === 'Existing Vault';
   }),
-  findBy: jest.fn().mockImplementation(async ({ userId, name }) => {
-    if (userId === '1' && name === 'Existing Vault') {
+  findBy: jest.fn().mockImplementation(async ({ id, userId, name }) => {
+    if ((userId === '1' && name === 'Existing Vault') || id === '1') {
       return {
         id: '1',
         userId: '1',
@@ -27,6 +27,28 @@ const mockVaultRepository = {
       };
     }
     return null;
+  }),
+  delete: jest.fn().mockImplementation(async ({ id }) => {
+    return;
+  }),
+  findAllBy: jest.fn().mockImplementation(async ({ userId }) => {
+    if (userId === '1') {
+      return [
+        {
+          id: '1',
+          userId: '1',
+          name: 'Vault 1',
+          description: 'This is vault 1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          items: [],
+        },
+      ];
+    }
+    return [];
+  }),
+  deleteAllBy: jest.fn().mockImplementation(async ({ userId }) => {
+    return;
   }),
 } as unknown as VaultRepository;
 
@@ -45,6 +67,10 @@ describe('VaultService', () => {
     }).compile();
 
     service = module.get<VaultService>(VaultService);
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -80,5 +106,48 @@ describe('VaultService', () => {
     await expect(service.createVault(vaultData)).rejects.toThrow(
       VaultAlreadyExistsError,
     );
+  });
+
+  it('should delete an existing vault', async () => {
+    const vaultData = {
+      vaultId: '1',
+      userId: '1',
+    };
+
+    const result = await service.deleteValut(vaultData);
+    expect(result).toBeUndefined();
+    expect(mockVaultRepository.delete).toHaveBeenCalledWith({ id: '1' });
+  });
+
+  it('should return null if vault does not exist', async () => {
+    const vaultData = {
+      vaultId: '2',
+      userId: '1',
+    };
+
+    const result = await service.deleteValut(vaultData);
+    expect(result).toBeUndefined();
+  });
+
+  it('should delete all vaults for a user', async () => {
+    const vaultData = {
+      userId: '1',
+    };
+
+    await service.deleteAllVaults(vaultData);
+    expect(mockVaultRepository.findAllBy).toHaveBeenCalledWith({ userId: '1' });
+    expect(mockVaultRepository.deleteAllBy).toHaveBeenCalledWith({
+      userId: '1',
+    });
+  });
+
+  it('should not delete any vaults if none exist for the user', async () => {
+    const vaultData = {
+      userId: '2',
+    };
+
+    await service.deleteAllVaults(vaultData);
+    expect(mockVaultRepository.findAllBy).toHaveBeenCalledWith({ userId: '2' });
+    expect(mockVaultRepository.deleteAllBy).not.toHaveBeenCalled();
   });
 });

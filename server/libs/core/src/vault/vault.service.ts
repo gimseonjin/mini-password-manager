@@ -3,6 +3,15 @@ import { CreateVault, Vault } from './vault.interface';
 import { VaultRepository } from './vault.repository';
 import { VaultAlreadyExistsError } from './vault.exception';
 
+interface DeleteVault {
+  vaultId: string;
+  userId: string;
+}
+
+interface DeleteAllVaults {
+  userId: string;
+}
+
 @Injectable()
 export class VaultService {
   constructor(private readonly vaultRepository: VaultRepository) {}
@@ -37,5 +46,37 @@ export class VaultService {
     };
 
     return this.vaultRepository.create(vault);
+  }
+
+  /**
+   * 사용자의 Vault를 삭제한다.
+   *
+   * @param param0 - Vault 삭제 정보 객체
+   *   - vaultId: 삭제할 Vault의 ID
+   *   - userId: Vault를 소유한 사용자의 ID
+   * @returns void
+   */
+  async deleteValut({ vaultId, userId }: DeleteVault): Promise<void> {
+    const vault = await this.vaultRepository.findBy({ id: vaultId, userId });
+    if (!vault) {
+      return;
+    }
+
+    return this.vaultRepository.delete({ id: vaultId });
+  }
+
+  /**
+   * 사용자의 모든 Vault를 삭제한다.
+   *
+   * @param param0 - 사용자 ID
+   * @returns void
+   */
+  async deleteAllVaults({ userId }: DeleteAllVaults): Promise<void> {
+    const vaults = await this.vaultRepository.findAllBy({ userId });
+    if (!vaults || vaults.length === 0) {
+      return;
+    }
+
+    await this.vaultRepository.deleteAllBy({ userId });
   }
 }

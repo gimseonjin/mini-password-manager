@@ -116,6 +116,26 @@ export class VaultRepository {
     }));
   }
 
+  async delete(
+    { id }: Prisma.vaultWhereUniqueInput,
+    trx?: DatabaseAdapter,
+  ): Promise<void> {
+    const db = trx ?? this.databaseAdapter;
+    await db.vault.delete({
+      where: { id },
+    });
+  }
+
+  async deleteAllBy(
+    where: Prisma.vaultWhereInput,
+    trx?: DatabaseAdapter,
+  ): Promise<void> {
+    const db = trx ?? this.databaseAdapter;
+    await db.vault.deleteMany({
+      where,
+    });
+  }
+
   private normalizeEncryption(encryption: JsonValue): VaultEncryption | null {
     if (encryption === null) return null;
     if (typeof encryption === 'object')
