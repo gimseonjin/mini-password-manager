@@ -7,7 +7,7 @@ import { User } from './user.interface';
 export class UserRepository {
   constructor(private readonly databaseAdapter: DatabaseAdapter) {}
 
-  async save(
+  async create(
     { name, email, encryptedPassword }: Prisma.userCreateInput,
     trx?: DatabaseAdapter,
   ): Promise<User> {

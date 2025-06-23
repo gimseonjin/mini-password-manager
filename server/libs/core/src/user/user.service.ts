@@ -29,7 +29,7 @@ export class UserService {
       throw new UserAlreadyExistsError(email);
     }
 
-    return this.userRepository.save({
+    return this.userRepository.create({
       name,
       email,
       encryptedPassword: hashValue(password),

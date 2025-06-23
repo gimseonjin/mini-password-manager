@@ -9,7 +9,7 @@ import {
 import { hashValue } from '../util/bcrypt.util';
 
 const mockUserRepository = {
-  save: jest.fn().mockImplementation(async (user) => ({
+  create: jest.fn().mockImplementation(async (user) => ({
     ...user,
     id: '1',
     createdAt: new Date(),
