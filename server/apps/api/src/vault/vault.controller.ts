@@ -125,23 +125,25 @@ export class VaultController {
 
   @UseGuards(JwtGuard)
   @Get()
-    @ApiOperation({
-        summary: '사용자의 Vault 목록 조회',
-        description: '사용자의 모든 Vault 목록을 조회합니다.',
-    })
-    @ApiResponse({
-        status: 200,
-        description: '사용자의 Vault 목록이 성공적으로 조회되었습니다.',
-        type: [FetchVaultsResponseDto],
-    })
-    @ApiResponse({
-        status: 401,
-        description: '인증이 필요합니다.',
-    })
-  async getVaults(@Authentication() user: UserInfo): Promise<FetchVaultsResponseDto[]> {
+  @ApiOperation({
+    summary: '사용자의 Vault 목록 조회',
+    description: '사용자의 모든 Vault 목록을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '사용자의 Vault 목록이 성공적으로 조회되었습니다.',
+    type: [FetchVaultsResponseDto],
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증이 필요합니다.',
+  })
+  async getVaults(
+    @Authentication() user: UserInfo,
+  ): Promise<FetchVaultsResponseDto[]> {
     const { id } = user;
     const vaults = await this.vaultService.getVaults({ userId: id });
-    
+
     return vaults.map((vault) => ({
       id: vault.id,
       name: vault.name,

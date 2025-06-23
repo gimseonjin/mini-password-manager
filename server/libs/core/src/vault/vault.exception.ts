@@ -4,3 +4,10 @@ export class VaultAlreadyExistsError extends Error {
     this.name = 'VaultAlreadyExistsError';
   }
 }
+
+export class VaultNotFoundError extends Error {
+  constructor(vaultId: string) {
+    super(`존재하지 않는 Vault입니다: ${vaultId}`);
+    this.name = 'VaultNotFoundError';
+  }
+}

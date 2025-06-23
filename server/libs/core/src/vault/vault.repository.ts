@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseAdapter } from '../database/database.adapter';
-import { Vault, VaultEncryption } from './vault.interface';
+import { Vault, VaultEncryption, VaultItem } from './vault.interface';
 import { JsonValue } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -134,6 +134,53 @@ export class VaultRepository {
     await db.vault.deleteMany({
       where,
     });
+  }
+
+  async addItem(
+    vaultId: string,
+    itemData: Omit<VaultItem, 'id' | 'vaultId' | 'createdAt' | 'updatedAt'>,
+    trx?: DatabaseAdapter,
+  ): Promise<Vault> {
+    const db = trx ?? this.databaseAdapter;
+
+    const prismaReadyItem: Prisma.vault_itemCreateInput = {
+      type: itemData.type,
+      title: itemData.title,
+      encryptedBlob: itemData.encryptedBlob,
+      encryption: itemData.encryption
+        ? (itemData.encryption as unknown as Prisma.InputJsonObject)
+        : Prisma.JsonNull,
+      vault: { connect: { id: vaultId } },
+    };
+
+    const vault = await db.vault.update({
+      where: { id: vaultId },
+      data: {
+        items: {
+          create: [prismaReadyItem],
+        },
+      },
+      include: { items: true },
+    });
+
+    return {
+      id: vault.id,
+      userId: vault.userId,
+      name: vault.name,
+      description: vault.description,
+      createdAt: vault.createdAt,
+      updatedAt: vault.updatedAt,
+      items: vault.items.map((item) => ({
+        id: item.id,
+        vaultId: item.vaultId,
+        type: item.type,
+        title: item.title,
+        encryptedBlob: item.encryptedBlob,
+        encryption: this.normalizeEncryption(item.encryption),
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      })),
+    };
   }
 
   private normalizeEncryption(encryption: JsonValue): VaultEncryption | null {

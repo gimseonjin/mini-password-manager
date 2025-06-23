@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AddVaultItem,
   CreateVault,
   DeleteAllVaults,
   DeleteVault,
@@ -7,7 +8,7 @@ import {
   Vault,
 } from './vault.interface';
 import { VaultRepository } from './vault.repository';
-import { VaultAlreadyExistsError } from './vault.exception';
+import { VaultAlreadyExistsError, VaultNotFoundError } from './vault.exception';
 
 @Injectable()
 export class VaultService {
@@ -85,5 +86,28 @@ export class VaultService {
     }
 
     await this.vaultRepository.deleteAllBy({ userId });
+  }
+
+  /**
+   * Vault에 새 아이템을 추가한다.
+   *
+   * @param param0 - Vault 아이템 추가 정보 객체
+   *   - vaultId: 아이템을 추가할 Vault의 ID
+   *   - item: 추가할 아이템 정보
+   * @returns 업데이트된 Vault 객체
+   * @throws VaultNotFoundError - 지정한 Vault가 존재하지 않는 경우
+   */
+  async addVaultItem({ vaultId, item }: AddVaultItem): Promise<Vault> {
+    const vault = await this.vaultRepository.findBy({ id: vaultId });
+    if (!vault) {
+      throw new VaultNotFoundError(vaultId);
+    }
+
+    return this.vaultRepository.addItem(vaultId, {
+      type: item.type,
+      title: item.title,
+      encryptedBlob: item.encryptedBlob,
+      encryption: item.encryption,
+    });
   }
 }

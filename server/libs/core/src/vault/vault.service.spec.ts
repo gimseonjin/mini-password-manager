@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VaultService } from './vault.service';
 import { VaultRepository } from './vault.repository';
-import { VaultAlreadyExistsError } from './vault.exception';
+import { VaultAlreadyExistsError, VaultNotFoundError } from './vault.exception';
 
 const mockVaultRepository = {
   create: jest.fn().mockImplementation(async (vault) => ({
@@ -49,6 +49,29 @@ const mockVaultRepository = {
   }),
   deleteAllBy: jest.fn().mockImplementation(async ({ userId }) => {
     return;
+  }),
+  addItem: jest.fn().mockImplementation(async (vaultId, item) => {
+    if (vaultId === '1') {
+      return {
+        id: vaultId,
+        userId: 'user-1',
+        name: 'My Vault',
+        description: 'Test Vault',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        items: [
+          {
+            ...item,
+            id: 'item1',
+            vaultId: vaultId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+    }
+
+    return null; // 혹은 throw new Error, 필요에 따라.
   }),
 } as unknown as VaultRepository;
 
@@ -149,5 +172,57 @@ describe('VaultService', () => {
     await service.deleteAllVaults(vaultData);
     expect(mockVaultRepository.findAllBy).toHaveBeenCalledWith({ userId: '2' });
     expect(mockVaultRepository.deleteAllBy).not.toHaveBeenCalled();
+  });
+
+  it(`should add a new item to a vault`, async () => {
+    const vaultId = '1';
+    const item = {
+      type: 'note',
+      title: 'Sample Item',
+      encryptedBlob: 'encrypted data',
+      encryption: null,
+    };
+
+    const result = await service.addVaultItem({ vaultId, item });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: vaultId,
+        name: expect.any(String),
+        userId: expect.any(String),
+        description: expect.any(String),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        items: expect.any(Array),
+      }),
+    );
+
+    const addedItem = result.items[0];
+    expect(addedItem).toEqual(
+      expect.objectContaining({
+        type: item.type,
+        title: item.title,
+        encryptedBlob: item.encryptedBlob,
+        encryption: null,
+        id: expect.any(String),
+        vaultId: vaultId,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it('should throw an error if vault does not exist when adding an item', async () => {
+    const vaultId = '2';
+    const item = {
+      type: 'note',
+      title: 'Sample Item',
+      encryptedBlob: 'encrypted data',
+      encryption: null,
+    };
+
+    await expect(service.addVaultItem({ vaultId, item })).rejects.toThrow(
+      VaultNotFoundError,
+    );
   });
 });
