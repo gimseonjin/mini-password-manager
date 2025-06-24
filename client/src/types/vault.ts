@@ -34,6 +34,26 @@ export interface VaultApiError {
   status: number
 }
 
+// 암호화 관련 타입 정의
+export interface EncryptionMetadata {
+  algorithm: 'AES-GCM'
+  iv: string // base64 encoded initialization vector
+  salt: string // base64 encoded salt for key derivation
+  kdf: 'Argon2id'
+  iterations: number
+}
+
+export interface EncryptedData {
+  data: string // base64 encoded encrypted data
+  metadata: EncryptionMetadata
+}
+
+export interface EncryptionOptions {
+  iterations?: number // default: 100000
+  memorySize?: number // default: 64MB for Argon2
+  parallelism?: number // default: 1
+}
+
 // Vault Item 관련 타입 정의
 
 export enum VaultItemType {

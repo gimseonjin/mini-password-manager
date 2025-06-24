@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { getCachedUser } from '../services/AuthService'
 import { hasUserSecretKey } from '../services/SettingsService'
 
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 function Header({ title, handleLogout }: HeaderProps) {
   const user = getCachedUser()
+  const location = useLocation()
   const [showLogoutWarning, setShowLogoutWarning] = useState(false)
 
   const handleLogoutClick = () => {
@@ -30,6 +32,10 @@ function Header({ title, handleLogout }: HeaderProps) {
     setShowLogoutWarning(false)
   }
 
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path
+  }
+
   return (
     <>
       <nav
@@ -39,95 +45,148 @@ function Header({ title, handleLogout }: HeaderProps) {
           backdropFilter: 'blur(10px)',
         }}
       >
-        <div className="container-fluid px-4 d-flex justify-content-between align-items-center py-3">
-          <div className="d-flex align-items-center">
-            <div className="me-3 p-2 rounded-circle bg-white bg-opacity-25">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M9 12L11 14L15 10"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h1 className="mb-0 h3 fw-bold text-white">{title}</h1>
-          </div>
-
-          <div className="d-flex align-items-center">
-            <div className="d-flex align-items-center gap-3">
-              <div
-                className="d-flex align-items-center px-3 py-2"
-                style={{
-                  background: 'rgba(0, 0, 0, 0.15)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '25px',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >
+        <div className="container-fluid px-4 py-3">
+          <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center">
+              <div className="me-3 p-2 rounded-circle bg-white bg-opacity-25">
                 <svg
-                  width="28"
-                  height="28"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="me-2"
                 >
-                  <circle cx="12" cy="12" r="10" fill="#667eea" />
-                  <circle cx="12" cy="10" r="3" fill="white" />
                   <path
-                    d="M7 20.662V20a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v.662"
+                    d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z"
                     stroke="white"
                     strokeWidth="2"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 12L11 14L15 10"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
-                <span
-                  className="text-white fw-medium"
+              </div>
+              <h1 className="mb-0 h3 fw-bold text-white">{title}</h1>
+            </div>
+
+            <div className="d-flex align-items-center">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  className="d-flex align-items-center px-3 py-2"
                   style={{
-                    fontSize: '0.9rem',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    background: 'rgba(0, 0, 0, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '25px',
+                    backdropFilter: 'blur(10px)',
                   }}
                 >
-                  {user?.name || '사용자'}님
-                </span>
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="me-2"
+                  >
+                    <circle cx="12" cy="12" r="10" fill="#667eea" />
+                    <circle cx="12" cy="10" r="3" fill="white" />
+                    <path
+                      d="M7 20.662V20a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v.662"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span
+                    className="text-white fw-medium"
+                    style={{
+                      fontSize: '0.9rem',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    {user?.name || '사용자'}님
+                  </span>
+                </div>
+                <button
+                  className="btn text-white fw-medium px-4 py-2 rounded-pill transition-all"
+                  onClick={handleLogoutClick}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    backdropFilter: 'blur(10px)',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  로그아웃
+                </button>
               </div>
-              <button
-                className="btn text-white fw-medium px-4 py-2 rounded-pill transition-all"
-                onClick={handleLogoutClick}
+            </div>
+          </div>
+
+          {/* 네비게이션 메뉴 */}
+          <div className="d-flex justify-content-center mt-3">
+            <div className="d-flex gap-2">
+              <Link
+                to="/"
+                className={`nav-link px-4 py-2 rounded-pill text-decoration-none fw-medium transition-all ${
+                  isActiveRoute('/') 
+                    ? 'bg-white text-primary' 
+                    : 'text-white hover-bg-white-20'
+                }`}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  backdropFilter: 'blur(10px)',
+                  background: isActiveRoute('/') ? 'white' : 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   transition: 'all 0.3s ease',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
+              >
+                🏠 홈
+              </Link>
+              <Link
+                to="/settings"
+                className={`nav-link px-4 py-2 rounded-pill text-decoration-none fw-medium transition-all ${
+                  isActiveRoute('/settings') 
+                    ? 'bg-white text-primary' 
+                    : 'text-white hover-bg-white-20'
+                }`}
+                style={{
+                  background: isActiveRoute('/settings') ? 'white' : 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  transition: 'all 0.3s ease',
                 }}
               >
-                로그아웃
-              </button>
+                ⚙️ 설정
+              </Link>
+              <Link
+                to="/crypto-demo"
+                className={`nav-link px-4 py-2 rounded-pill text-decoration-none fw-medium transition-all ${
+                  isActiveRoute('/crypto-demo') 
+                    ? 'bg-white text-primary' 
+                    : 'text-white hover-bg-white-20'
+                }`}
+                style={{
+                  background: isActiveRoute('/crypto-demo') ? 'white' : 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                🔐 암호화 데모
+              </Link>
             </div>
           </div>
         </div>

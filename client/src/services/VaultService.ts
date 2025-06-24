@@ -2,11 +2,19 @@ import {
   CreateVaultRequest,
   CreateVaultResponse,
   FetchVaultsResponse,
+  VaultItem,
+  CreateVaultItemRequest,
+  CreateVaultItemResponse,
+  UpdateVaultItemRequest,
+  VaultItemData,
+  EncryptedData,
+  EncryptionOptions,
 } from '../types/vault'
 import {
   httpRequest,
   ApiRequestError,
 } from './httpClient'
+import CryptoService from './CryptoService'
 
 // Vault API 함수들
 
@@ -98,4 +106,243 @@ export async function deleteAllVaults(): Promise<void> {
     }
     throw error
   }
-} 
+}
+
+// Vault Item 관련 함수들 (암호화 지원)
+
+/**
+ * 특정 Vault의 모든 Item을 조회하고 복호화합니다.
+ * @param vaultId - Vault ID
+ * @param masterPassword - 복호화에 사용할 마스터 비밀번호
+ * @returns 복호화된 VaultItem 목록
+ */
+export async function getVaultItems(
+  vaultId: string,
+  masterPassword: string
+): Promise<VaultItem[]> {
+  try {
+    const response = await httpRequest<any[]>(`/api/v1/vaults/${vaultId}/items`)
+    
+    // 각 아이템의 데이터를 복호화
+    const decryptedItems: VaultItem[] = []
+    
+    for (const item of response) {
+      try {
+        // 암호화된 데이터가 있는 경우 복호화
+        if (item.encryptedData) {
+          const decryptedData = await CryptoService.decrypt(
+            item.encryptedData as EncryptedData,
+            masterPassword
+          )
+          
+          const parsedData = JSON.parse(decryptedData) as VaultItemData
+          
+          decryptedItems.push({
+            ...item,
+            data: parsedData
+          })
+        } else {
+          // 암호화되지 않은 기존 데이터 처리
+          decryptedItems.push(item)
+        }
+      } catch (decryptError) {
+        console.error(`아이템 ${item.id} 복호화 실패:`, decryptError)
+        // 복호화에 실패한 아이템은 제외하고 계속 진행
+      }
+    }
+    
+    return decryptedItems
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('Vault를 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * 새로운 VaultItem을 생성하고 데이터를 암호화합니다.
+ * @param itemData - 생성할 아이템 데이터
+ * @param masterPassword - 암호화에 사용할 마스터 비밀번호
+ * @param encryptionOptions - 암호화 옵션
+ * @returns 생성된 VaultItem
+ */
+export async function createVaultItem(
+  itemData: CreateVaultItemRequest,
+  masterPassword: string,
+  encryptionOptions?: EncryptionOptions
+): Promise<CreateVaultItemResponse> {
+  try {
+    // 데이터 암호화
+    const serializedData = JSON.stringify(itemData.data)
+    const encryptedData = await CryptoService.encrypt(
+      serializedData,
+      masterPassword,
+      encryptionOptions
+    )
+
+    // 암호화된 데이터와 함께 요청 생성
+    const requestData = {
+      vaultId: itemData.vaultId,
+      type: itemData.type,
+      name: itemData.name,
+      favorite: itemData.favorite || false,
+      folder: itemData.folder,
+      notes: itemData.notes,
+      encryptedData: encryptedData
+    }
+
+    const response = await httpRequest<any>(
+      `/api/v1/vaults/${itemData.vaultId}/items`,
+      {
+        method: 'POST',
+        body: JSON.stringify(requestData),
+      }
+    )
+
+    // 응답에서 원본 데이터 반환
+    return {
+      ...response,
+      data: itemData.data
+    }
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('Vault를 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * VaultItem을 업데이트하고 데이터를 암호화합니다.
+ * @param itemData - 업데이트할 아이템 데이터
+ * @param masterPassword - 암호화에 사용할 마스터 비밀번호
+ * @param encryptionOptions - 암호화 옵션
+ * @returns 업데이트된 VaultItem
+ */
+export async function updateVaultItem(
+  itemData: UpdateVaultItemRequest,
+  masterPassword: string,
+  encryptionOptions?: EncryptionOptions
+): Promise<VaultItem> {
+  try {
+    let requestData: any = {
+      name: itemData.name,
+      favorite: itemData.favorite,
+      folder: itemData.folder,
+      notes: itemData.notes
+    }
+
+    // 데이터가 업데이트되는 경우 암호화
+    if (itemData.data) {
+      const serializedData = JSON.stringify(itemData.data)
+      const encryptedData = await CryptoService.encrypt(
+        serializedData,
+        masterPassword,
+        encryptionOptions
+      )
+      requestData.encryptedData = encryptedData
+    }
+
+    const response = await httpRequest<any>(
+      `/api/v1/vaults/items/${itemData.id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(requestData),
+      }
+    )
+
+    // 응답에서 복호화된 데이터와 함께 반환
+    let decryptedData = null
+    if (response.encryptedData) {
+      const decryptedDataStr = await CryptoService.decrypt(
+        response.encryptedData as EncryptedData,
+        masterPassword
+      )
+      decryptedData = JSON.parse(decryptedDataStr)
+    }
+
+    return {
+      ...response,
+      data: decryptedData || itemData.data
+    }
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('아이템을 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * VaultItem을 삭제합니다.
+ * @param itemId - 삭제할 아이템 ID
+ */
+export async function deleteVaultItem(itemId: string): Promise<void> {
+  try {
+    await httpRequest<void>(`/api/v1/vaults/items/${itemId}`, {
+      method: 'DELETE',
+    })
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('아이템을 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * Vault의 모든 데이터를 내보내기합니다 (복호화된 상태).
+ * @param vaultId - Vault ID
+ * @param masterPassword - 복호화에 사용할 마스터 비밀번호
+ * @returns 복호화된 Vault 데이터
+ */
+export async function exportVaultData(
+  vaultId: string,
+  masterPassword: string
+): Promise<{
+  vault: FetchVaultsResponse
+  items: VaultItem[]
+}> {
+  try {
+    const [vaults, items] = await Promise.all([
+      getVaults(),
+      getVaultItems(vaultId, masterPassword)
+    ])
+
+    const vault = vaults.find(v => v.id === vaultId)
+    if (!vault) {
+      throw new Error('Vault를 찾을 수 없습니다.')
+    }
+
+    return {
+      vault,
+      items
+    }
+  } catch (error) {
+    throw new Error(`데이터 내보내기 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+  }
+}
+
+// 암호화 관련 유틸리티 함수들
+export { CryptoService } 
