@@ -4,8 +4,10 @@ import {
   CreateVault,
   DeleteAllVaults,
   DeleteVault,
+  GetVaultItem,
   GetVaults,
   Vault,
+  VaultItem,
 } from './vault.interface';
 import { VaultRepository } from './vault.repository';
 import { VaultAlreadyExistsError, VaultNotFoundError } from './vault.exception';
@@ -110,5 +112,14 @@ export class VaultService {
       encryptedBlob: item.encryptedBlob,
       encryption: item.encryption,
     });
+  }
+
+  async getVaultItem({ userId, vaultId }: GetVaultItem): Promise<VaultItem[]> {
+    const vault = await this.vaultRepository.findBy({ id: vaultId, userId });
+    if (!vault) {
+      throw new VaultNotFoundError(vaultId);
+    }
+
+    return vault.items;
   }
 }

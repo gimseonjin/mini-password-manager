@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isLoggedIn, getCachedUser } from '../services/AuthService'
-import { createVault, getVaults, deleteVault } from '../services/VaultService'
-import { CreateVaultRequest, AddVaultItemResponseDto, FetchVaultsResponse } from '../types/vault'
+import { createVault, getVaults, deleteVault, getVaultItemsDecrypted } from '../services/VaultService'
+import { CreateVaultRequest, AddVaultItemResponseDto, FetchVaultsResponse, VaultItemDto } from '../types/vault'
 import { SettingsIcon, ShieldIcon } from '../components/icons'
 import AddAccountForm from '../components/AddVaultItemForm'
 import { loadUserSecretKey } from '../services/SettingsService'
@@ -23,6 +23,11 @@ function HomePage() {
   const [showAddItemForm, setShowAddItemForm] = useState(false)
   const [isCreatingItem, setIsCreatingItem] = useState(false)
   const [secretKey, setSecretKey] = useState<string>('')
+  const [vaultItems, setVaultItems] = useState<(VaultItemDto & { decryptedData?: any })[]>([])
+  const [isLoadingItems, setIsLoadingItems] = useState(false)
+  const [itemsError, setItemsError] = useState('')
+  const [selectedItem, setSelectedItem] = useState<(VaultItemDto & { decryptedData?: any }) | null>(null)
+  const [showItemModal, setShowItemModal] = useState(false)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -38,6 +43,15 @@ function HomePage() {
       }
     }
   }, [])
+
+  // selectedVault가 변경되면 해당 vault의 아이템들을 로드
+  useEffect(() => {
+    if (selectedVault && secretKey) {
+      loadVaultItems(selectedVault.id)
+    } else {
+      setVaultItems([])
+    }
+  }, [selectedVault, secretKey])
 
   const loadVaults = async () => {
     try {
@@ -59,6 +73,28 @@ function HomePage() {
       }
     } finally {
       setIsLoadingVaults(false)
+    }
+  }
+
+  const loadVaultItems = async (vaultId: string) => {
+    if (!secretKey) {
+      setItemsError('시크릿 키가 설정되지 않았습니다.')
+      return
+    }
+
+    try {
+      setIsLoadingItems(true)
+      setItemsError('')
+      const items = await getVaultItemsDecrypted(vaultId, secretKey)
+      setVaultItems(items)
+    } catch (error) {
+      if (error instanceof Error) {
+        setItemsError(error.message)
+      } else {
+        setItemsError('Vault 아이템을 불러오는 중 오류가 발생했습니다.')
+      }
+    } finally {
+      setIsLoadingItems(false)
     }
   }
 
@@ -176,7 +212,10 @@ function HomePage() {
       alert('계정이 성공적으로 추가되었습니다!')
       setShowAddItemForm(false)
       
-      // TODO: vault item 목록 새로고침 구현 예정
+      // vault item 목록 새로고침
+      if (selectedVault) {
+        await loadVaultItems(selectedVault.id)
+      }
       
     } catch (error) {
       if (error instanceof Error) {
@@ -184,6 +223,57 @@ function HomePage() {
       } else {
         alert('계정 추가 중 오류가 발생했습니다.')
       }
+    }
+  }
+
+  const handleItemClick = (item: VaultItemDto & { decryptedData?: any }) => {
+    setSelectedItem(item)
+    setShowItemModal(true)
+  }
+
+  const handleCloseItemModal = () => {
+    setShowItemModal(false)
+    setSelectedItem(null)
+  }
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      // 간단한 토스트 알림 대신 alert 사용 (추후 토스트로 개선 가능)
+      alert(`${fieldName}이(가) 클립보드에 복사되었습니다!`)
+    } catch (error) {
+      console.error('클립보드 복사 실패:', error)
+      alert('클립보드 복사에 실패했습니다.')
+    }
+  }
+
+  const getItemIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'login':
+        return '🔐'
+      case 'note':
+        return '📝'
+      case 'card':
+        return '💳'
+      case 'identity':
+        return '👤'
+      default:
+        return '🔒'
+    }
+  }
+
+  const getItemTypeLabel = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'login':
+        return '로그인'
+      case 'note':
+        return '보안 메모'
+      case 'card':
+        return '카드'
+      case 'identity':
+        return '신원 정보'
+      default:
+        return type
     }
   }
 
@@ -375,15 +465,129 @@ function HomePage() {
 
                     {/* Vault 아이템 목록 */}
                     <div className="vault-items">
-                      <div className="text-center py-5">
-                        <div className="text-muted mb-3">
-                          <svg width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-                          </svg>
+                      {itemsError && (
+                        <div className="alert alert-danger alert-sm" role="alert">
+                          {itemsError}
                         </div>
-                        <h4 className="h6 text-muted mb-2">아직 저장된 아이템이 없습니다</h4>
-                        <p className="text-muted small">첫 번째 비밀번호나 보안 정보를 추가해보세요!</p>
-                      </div>
+                      )}
+
+                      {isLoadingItems ? (
+                        <div className="text-center py-4">
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">로딩 중...</span>
+                          </div>
+                          <p className="mt-2 text-muted small">아이템을 불러오는 중...</p>
+                        </div>
+                      ) : vaultItems.length === 0 ? (
+                        <div className="text-center py-5">
+                          <div className="text-muted mb-3">
+                            <svg width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                            </svg>
+                          </div>
+                          <h4 className="h6 text-muted mb-2">아직 저장된 아이템이 없습니다</h4>
+                          <p className="text-muted small">첫 번째 비밀번호나 보안 정보를 추가해보세요!</p>
+                        </div>
+                      ) : (
+                        <div className="item-list">
+                          {vaultItems.map((item) => (
+                            <div 
+                              key={item.id} 
+                              className="item-card bg-light rounded-3 p-3 mb-3 cursor-pointer hover-shadow"
+                              onClick={() => handleItemClick(item)}
+                              style={{ 
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                border: '1px solid transparent'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = '#0d6efd'
+                                e.currentTarget.style.backgroundColor = '#f8f9fa'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'transparent'
+                                e.currentTarget.style.backgroundColor = '#f8f9fa'
+                              }}
+                            >
+                              <div className="d-flex align-items-center justify-content-between">
+                                <div className="d-flex align-items-center flex-grow-1">
+                                  <div className="item-icon me-3">
+                                    <span style={{ fontSize: '24px' }}>
+                                      {getItemIcon(item.type)}
+                                    </span>
+                                  </div>
+                                  <div className="flex-grow-1">
+                                    <div className="d-flex align-items-center mb-1">
+                                      <h6 className="mb-0 fw-semibold text-dark">{item.title}</h6>
+                                      <span className="badge bg-primary rounded-pill ms-2 small">
+                                        {getItemTypeLabel(item.type)}
+                                      </span>
+                                    </div>
+                                    {/* 미리 보기 정보 */}
+                                    <div className="preview-info">
+                                      {item.decryptedData ? (
+                                        <div className="text-muted small">
+                                          {item.type === 'login' && item.decryptedData.username && (
+                                            <span>사용자: {item.decryptedData.username}</span>
+                                          )}
+                                          {item.type === 'login' && item.decryptedData.website && (
+                                            <span className={item.decryptedData.username ? 'ms-2' : ''}>
+                                              {item.decryptedData.website}
+                                            </span>
+                                          )}
+                                          {item.type === 'note' && (
+                                            <span>보안 메모</span>
+                                          )}
+                                          {item.type === 'card' && item.decryptedData.cardNumber && (
+                                            <span>카드: ****{item.decryptedData.cardNumber.slice(-4)}</span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="text-warning small">
+                                          클릭하여 복호화
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="small text-muted mt-1">
+                                      수정: {formatDate(item.updatedAt)}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="item-actions d-flex align-items-center">
+                                  <button 
+                                    className="btn btn-sm btn-outline-secondary rounded-circle p-1 me-2"
+                                    style={{ width: '28px', height: '28px', fontSize: '12px' }}
+                                    title="수정"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      alert('수정 기능 구현 예정')
+                                    }}
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button 
+                                    className="btn btn-sm btn-outline-danger rounded-circle p-1"
+                                    style={{ width: '28px', height: '28px', fontSize: '12px' }}
+                                    title="삭제"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      alert('삭제 기능 구현 예정')
+                                    }}
+                                  >
+                                    🗑️
+                                  </button>
+                                  <div className="ms-2 text-muted">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                      <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* 아이템 추가 모달 */}
@@ -408,6 +612,287 @@ function HomePage() {
           </div>
         </div>
       </main>
+
+      {/* 아이템 상세 모달 */}
+      {showItemModal && selectedItem && (
+        <div 
+          className="modal fade show d-block" 
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+          onClick={handleCloseItemModal}
+        >
+          <div 
+            className="modal-dialog modal-dialog-centered modal-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <div className="d-flex align-items-center">
+                  <span className="me-3" style={{ fontSize: '24px' }}>
+                    {getItemIcon(selectedItem.type)}
+                  </span>
+                  <div>
+                    <h5 className="modal-title mb-0">{selectedItem.title}</h5>
+                    <small className="opacity-75">{getItemTypeLabel(selectedItem.type)}</small>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={handleCloseItemModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {selectedItem.decryptedData ? (
+                  <div className="item-details">
+                    {/* 로그인 타입 */}
+                    {selectedItem.type === 'login' && (
+                      <div>
+                        {selectedItem.decryptedData.username && (
+                          <div className="mb-3">
+                            <label className="form-label small text-muted fw-semibold">사용자명</label>
+                            <div className="input-group">
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={selectedItem.decryptedData.username} 
+                                readOnly 
+                              />
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => copyToClipboard(selectedItem.decryptedData.username, '사용자명')}
+                                title="복사"
+                              >
+                                📋
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {selectedItem.decryptedData.password && (
+                          <div className="mb-3">
+                            <label className="form-label small text-muted fw-semibold">비밀번호</label>
+                            <div className="input-group">
+                              <input 
+                                type="password" 
+                                className="form-control" 
+                                value={selectedItem.decryptedData.password} 
+                                readOnly 
+                              />
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => copyToClipboard(selectedItem.decryptedData.password, '비밀번호')}
+                                title="복사"
+                              >
+                                📋
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {selectedItem.decryptedData.website && (
+                          <div className="mb-3">
+                            <label className="form-label small text-muted fw-semibold">웹사이트</label>
+                            <div className="input-group">
+                              <input 
+                                type="url" 
+                                className="form-control" 
+                                value={selectedItem.decryptedData.website} 
+                                readOnly 
+                              />
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => copyToClipboard(selectedItem.decryptedData.website, '웹사이트')}
+                                title="복사"
+                              >
+                                📋
+                              </button>
+                              <button 
+                                className="btn btn-outline-primary"
+                                onClick={() => window.open(selectedItem.decryptedData.website, '_blank')}
+                                title="새 탭에서 열기"
+                              >
+                                🔗
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 보안 메모 타입 */}
+                    {selectedItem.type === 'note' && selectedItem.decryptedData.content && (
+                      <div className="mb-3">
+                        <label className="form-label small text-muted fw-semibold">내용</label>
+                        <div className="position-relative">
+                          <textarea 
+                            className="form-control" 
+                            rows={6}
+                            value={selectedItem.decryptedData.content} 
+                            readOnly 
+                          />
+                          <button 
+                            className="btn btn-outline-secondary btn-sm position-absolute"
+                            style={{ top: '8px', right: '8px' }}
+                            onClick={() => copyToClipboard(selectedItem.decryptedData.content, '내용')}
+                            title="복사"
+                          >
+                            📋
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 카드 타입 */}
+                    {selectedItem.type === 'card' && (
+                      <div>
+                        {selectedItem.decryptedData.cardholderName && (
+                          <div className="mb-3">
+                            <label className="form-label small text-muted fw-semibold">카드 소유자명</label>
+                            <div className="input-group">
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={selectedItem.decryptedData.cardholderName} 
+                                readOnly 
+                              />
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => copyToClipboard(selectedItem.decryptedData.cardholderName, '카드 소유자명')}
+                                title="복사"
+                              >
+                                📋
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {selectedItem.decryptedData.cardNumber && (
+                          <div className="mb-3">
+                            <label className="form-label small text-muted fw-semibold">카드 번호</label>
+                            <div className="input-group">
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={selectedItem.decryptedData.cardNumber} 
+                                readOnly 
+                              />
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => copyToClipboard(selectedItem.decryptedData.cardNumber, '카드 번호')}
+                                title="복사"
+                              >
+                                📋
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        <div className="row">
+                          {selectedItem.decryptedData.expirationMonth && selectedItem.decryptedData.expirationYear && (
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label small text-muted fw-semibold">만료일</label>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={`${selectedItem.decryptedData.expirationMonth}/${selectedItem.decryptedData.expirationYear}`} 
+                                readOnly 
+                              />
+                            </div>
+                          )}
+                          {selectedItem.decryptedData.securityCode && (
+                            <div className="col-md-6 mb-3">
+                              <label className="form-label small text-muted fw-semibold">보안 코드</label>
+                              <div className="input-group">
+                                <input 
+                                  type="password" 
+                                  className="form-control" 
+                                  value={selectedItem.decryptedData.securityCode} 
+                                  readOnly 
+                                />
+                                <button 
+                                  className="btn btn-outline-secondary"
+                                  onClick={() => copyToClipboard(selectedItem.decryptedData.securityCode, '보안 코드')}
+                                  title="복사"
+                                >
+                                  📋
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 공통 메모 필드 */}
+                    {selectedItem.decryptedData.notes && (
+                      <div className="mb-3">
+                        <label className="form-label small text-muted fw-semibold">메모</label>
+                        <div className="position-relative">
+                          <textarea 
+                            className="form-control" 
+                            rows={3}
+                            value={selectedItem.decryptedData.notes} 
+                            readOnly 
+                          />
+                          <button 
+                            className="btn btn-outline-secondary btn-sm position-absolute"
+                            style={{ top: '8px', right: '8px' }}
+                            onClick={() => copyToClipboard(selectedItem.decryptedData.notes, '메모')}
+                            title="복사"
+                          >
+                            📋
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 메타데이터 */}
+                    <div className="border-top pt-3 mt-4">
+                      <div className="row text-muted small">
+                        <div className="col-md-6">
+                          <strong>생성일:</strong> {formatDate(selectedItem.createdAt)}
+                        </div>
+                        <div className="col-md-6">
+                          <strong>수정일:</strong> {formatDate(selectedItem.updatedAt)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-warning mb-3">
+                      <svg width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                      </svg>
+                    </div>
+                    <h6 className="text-warning">복호화 실패</h6>
+                    <p className="text-muted">이 아이템의 데이터를 복호화할 수 없습니다. 시크릿 키를 확인해주세요.</p>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary"
+                  onClick={() => alert('수정 기능 구현 예정')}
+                >
+                  ✏️ 수정
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-outline-danger"
+                  onClick={() => alert('삭제 기능 구현 예정')}
+                >
+                  🗑️ 삭제
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleCloseItemModal}
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vault 생성 모달 */}
       {showCreateModal && (

@@ -11,6 +11,7 @@ import {
   EncryptionOptions,
   AddVaultItemRequestDto,
   AddVaultItemResponseDto,
+  VaultItemDto,
 } from '../types/vault'
 import {
   httpRequest,
@@ -113,6 +114,28 @@ export async function deleteAllVaults(): Promise<void> {
 // Vault Item 관련 함수들 (암호화 지원)
 
 /**
+ * API 스펙에 맞춰 특정 Vault의 모든 Item을 조회합니다 (암호화된 상태로).
+ * @param vaultId - Vault ID
+ * @returns 암호화된 VaultItemDto 목록
+ */
+export async function getVaultItemsRaw(vaultId: string): Promise<VaultItemDto[]> {
+  try {
+    const response = await httpRequest<VaultItemDto[]>(`/api/v1/vaults/${vaultId}/items`)
+    return response
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('Vault를 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
  * 특정 Vault의 모든 Item을 조회하고 복호화합니다.
  * @param vaultId - Vault ID
  * @param secretKey - 복호화에 사용할 시크릿 키
@@ -150,6 +173,73 @@ export async function getVaultItems(
       } catch (decryptError) {
         console.error(`아이템 ${item.id} 복호화 실패:`, decryptError)
         // 복호화에 실패한 아이템은 제외하고 계속 진행
+      }
+    }
+    
+    return decryptedItems
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('Vault를 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * API 스펙에 맞춰 특정 Vault의 모든 Item을 조회하고 복호화합니다.
+ * @param vaultId - Vault ID
+ * @param secretKey - 복호화에 사용할 시크릿 키
+ * @returns 복호화된 데이터를 포함한 VaultItemDto 목록
+ */
+export async function getVaultItemsDecrypted(
+  vaultId: string,
+  secretKey: string
+): Promise<(VaultItemDto & { decryptedData?: any })[]> {
+  try {
+    const response = await getVaultItemsRaw(vaultId)
+    
+    // 각 아이템의 데이터를 복호화
+    const decryptedItems: (VaultItemDto & { decryptedData?: any })[] = []
+    
+    for (const item of response) {
+      try {
+        // encryptedBlob을 복호화
+        if (item.encryptedBlob && item.encryption) {
+          const encryptedData: EncryptedData = {
+            data: item.encryptedBlob,
+            metadata: {
+              algorithm: item.encryption.algorithm,
+              iv: item.encryption.iv,
+              salt: item.encryption.salt,
+              kdf: item.encryption.kdf,
+              iterations: item.encryption.iterations
+            }
+          }
+          
+          const decryptedDataString = await CryptoService.decrypt(
+            encryptedData,
+            secretKey
+          )
+          
+          const decryptedData = JSON.parse(decryptedDataString)
+          
+          decryptedItems.push({
+            ...item,
+            decryptedData
+          })
+        } else {
+          // 암호화되지 않은 아이템 처리
+          decryptedItems.push(item)
+        }
+      } catch (decryptError) {
+        console.error(`아이템 ${item.id} 복호화 실패:`, decryptError)
+        // 복호화에 실패한 아이템도 포함 (encryptedBlob 상태로)
+        decryptedItems.push(item)
       }
     }
     

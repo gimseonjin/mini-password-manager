@@ -51,3 +51,8 @@ export interface AddVaultItem {
   vaultId: string;
   item: Omit<VaultItem, 'id' | 'vaultId' | 'createdAt' | 'updatedAt'>;
 }
+
+export interface GetVaultItem {
+  userId: string;
+  vaultId: string;
+}

@@ -3,6 +3,7 @@ import { VaultService } from '@app/core/vault/vault.service';
 import {
   Body,
   Controller,
+  Get,
   NotFoundException,
   Param,
   Post,
@@ -188,5 +189,31 @@ export class VaultItemController {
       }
       throw error;
     }
+  }
+
+  @UseGuards(JwtGuard)
+  @Get()
+  @ApiOperation({
+    summary: 'Vault 아이템 목록 조회',
+    description: '특정 Vault에 포함된 모든 아이템의 목록을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Vault 아이템 목록이 성공적으로 조회되었습니다.',
+    type: [VaultItemDto],
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증이 필요합니다.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Vault를 찾을 수 없습니다.',
+  })
+  async getVaultItem(
+    @Authentication() user: UserInfo,
+    @Param('vaultId') vaultId: string,
+  ): Promise<VaultItemDto[]> {
+    return this.vaultItemService.getVaultItem({ userId: user.id, vaultId });
   }
 }
