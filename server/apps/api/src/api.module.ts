@@ -9,6 +9,11 @@ import { VaultItemController } from './vault/vault-item.controller';
 
 @Module({
   imports: [CoreModule, TerminusModule, HttpModule],
-  controllers: [ApiController, UserController, VaultController, VaultItemController],
+  controllers: [
+    ApiController,
+    UserController,
+    VaultController,
+    VaultItemController,
+  ],
 })
 export class ApiModule {}

@@ -9,6 +9,8 @@ import {
   VaultItemData,
   EncryptedData,
   EncryptionOptions,
+  AddVaultItemRequestDto,
+  AddVaultItemResponseDto,
 } from '../types/vault'
 import {
   httpRequest,
@@ -113,12 +115,12 @@ export async function deleteAllVaults(): Promise<void> {
 /**
  * 특정 Vault의 모든 Item을 조회하고 복호화합니다.
  * @param vaultId - Vault ID
- * @param masterPassword - 복호화에 사용할 마스터 비밀번호
+ * @param secretKey - 복호화에 사용할 시크릿 키
  * @returns 복호화된 VaultItem 목록
  */
 export async function getVaultItems(
   vaultId: string,
-  masterPassword: string
+  secretKey: string
 ): Promise<VaultItem[]> {
   try {
     const response = await httpRequest<any[]>(`/api/v1/vaults/${vaultId}/items`)
@@ -132,7 +134,7 @@ export async function getVaultItems(
         if (item.encryptedData) {
           const decryptedData = await CryptoService.decrypt(
             item.encryptedData as EncryptedData,
-            masterPassword
+            secretKey
           )
           
           const parsedData = JSON.parse(decryptedData) as VaultItemData
@@ -166,15 +168,95 @@ export async function getVaultItems(
 }
 
 /**
- * 새로운 VaultItem을 생성하고 데이터를 암호화합니다.
- * @param itemData - 생성할 아이템 데이터
+ * API 스펙에 맞춰 새로운 VaultItem을 생성합니다.
+ * @param vaultId - Vault ID
+ * @param itemData - 생성할 아이템 데이터 (API 스펙 형식)
+ * @returns API 응답
+ */
+export async function addVaultItem(
+  vaultId: string,
+  itemData: AddVaultItemRequestDto
+): Promise<AddVaultItemResponseDto> {
+  try {
+    const response = await httpRequest<AddVaultItemResponseDto>(
+      `/api/v1/vaults/${vaultId}/items`,
+      {
+        method: 'POST',
+        body: JSON.stringify(itemData),
+      }
+    )
+
+    return response
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      if (error.status === 401) {
+        throw new Error('인증이 필요합니다.')
+      }
+      if (error.status === 404) {
+        throw new Error('Vault를 찾을 수 없습니다.')
+      }
+    }
+    throw error
+  }
+}
+
+/**
+ * VaultItem 데이터를 암호화하여 API 스펙에 맞게 추가합니다.
+ * @param vaultId - Vault ID
+ * @param type - 아이템 타입 (login, note, card 등)
+ * @param title - 아이템 제목
+ * @param data - 암호화할 데이터 객체
  * @param masterPassword - 암호화에 사용할 마스터 비밀번호
+ * @param encryptionOptions - 암호화 옵션
+ * @returns API 응답
+ */
+export async function addVaultItemWithEncryption(
+  vaultId: string,
+  type: string,
+  title: string,
+  data: any,
+  secretKey: string,
+  encryptionOptions?: EncryptionOptions
+): Promise<AddVaultItemResponseDto> {
+  try {
+    // 데이터를 JSON으로 직렬화하고 암호화
+    const serializedData = JSON.stringify(data)
+    const encryptedData = await CryptoService.encrypt(
+      serializedData,
+      secretKey,
+      encryptionOptions
+    )
+
+    // API 스펙에 맞는 요청 데이터 생성
+    const requestData: AddVaultItemRequestDto = {
+      type,
+      title,
+      encryptedBlob: encryptedData.data,
+      encryption: {
+        algorithm: encryptedData.metadata.algorithm,
+        iv: encryptedData.metadata.iv,
+        salt: encryptedData.metadata.salt,
+        kdf: encryptedData.metadata.kdf,
+        iterations: encryptedData.metadata.iterations
+      }
+    }
+
+    return await addVaultItem(vaultId, requestData)
+  } catch (error) {
+    throw new Error(`아이템 생성 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+  }
+}
+
+/**
+ * 새로운 VaultItem을 생성하고 데이터를 암호화합니다. (기존 방식)
+ * @param itemData - 생성할 아이템 데이터
+ * @param secretKey - 암호화에 사용할 시크릿 키
  * @param encryptionOptions - 암호화 옵션
  * @returns 생성된 VaultItem
  */
 export async function createVaultItem(
   itemData: CreateVaultItemRequest,
-  masterPassword: string,
+  secretKey: string,
   encryptionOptions?: EncryptionOptions
 ): Promise<CreateVaultItemResponse> {
   try {
@@ -182,7 +264,7 @@ export async function createVaultItem(
     const serializedData = JSON.stringify(itemData.data)
     const encryptedData = await CryptoService.encrypt(
       serializedData,
-      masterPassword,
+      secretKey,
       encryptionOptions
     )
 
@@ -226,13 +308,13 @@ export async function createVaultItem(
 /**
  * VaultItem을 업데이트하고 데이터를 암호화합니다.
  * @param itemData - 업데이트할 아이템 데이터
- * @param masterPassword - 암호화에 사용할 마스터 비밀번호
+ * @param secretKey - 암호화에 사용할 시크릿 키
  * @param encryptionOptions - 암호화 옵션
  * @returns 업데이트된 VaultItem
  */
 export async function updateVaultItem(
   itemData: UpdateVaultItemRequest,
-  masterPassword: string,
+  secretKey: string,
   encryptionOptions?: EncryptionOptions
 ): Promise<VaultItem> {
   try {
@@ -248,7 +330,7 @@ export async function updateVaultItem(
       const serializedData = JSON.stringify(itemData.data)
       const encryptedData = await CryptoService.encrypt(
         serializedData,
-        masterPassword,
+        secretKey,
         encryptionOptions
       )
       requestData.encryptedData = encryptedData
@@ -267,7 +349,7 @@ export async function updateVaultItem(
     if (response.encryptedData) {
       const decryptedDataStr = await CryptoService.decrypt(
         response.encryptedData as EncryptedData,
-        masterPassword
+        secretKey
       )
       decryptedData = JSON.parse(decryptedDataStr)
     }
@@ -314,12 +396,12 @@ export async function deleteVaultItem(itemId: string): Promise<void> {
 /**
  * Vault의 모든 데이터를 내보내기합니다 (복호화된 상태).
  * @param vaultId - Vault ID
- * @param masterPassword - 복호화에 사용할 마스터 비밀번호
+ * @param secretKey - 복호화에 사용할 시크릿 키
  * @returns 복호화된 Vault 데이터
  */
 export async function exportVaultData(
   vaultId: string,
-  masterPassword: string
+  secretKey: string
 ): Promise<{
   vault: FetchVaultsResponse
   items: VaultItem[]
@@ -327,7 +409,7 @@ export async function exportVaultData(
   try {
     const [vaults, items] = await Promise.all([
       getVaults(),
-      getVaultItems(vaultId, masterPassword)
+      getVaultItems(vaultId, secretKey)
     ])
 
     const vault = vaults.find(v => v.id === vaultId)

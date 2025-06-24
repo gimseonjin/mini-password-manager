@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isLoggedIn, getCachedUser } from '../services/AuthService'
 import { createVault, getVaults, deleteVault } from '../services/VaultService'
-import { CreateVaultRequest, CreateVaultItemRequest, FetchVaultsResponse } from '../types/vault'
+import { CreateVaultRequest, AddVaultItemResponseDto, FetchVaultsResponse } from '../types/vault'
 import { SettingsIcon, ShieldIcon } from '../components/icons'
 import AddAccountForm from '../components/AddVaultItemForm'
+import { loadUserSecretKey } from '../services/SettingsService'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -21,12 +22,20 @@ function HomePage() {
   const [showVaultMenu, setShowVaultMenu] = useState<string | null>(null)
   const [showAddItemForm, setShowAddItemForm] = useState(false)
   const [isCreatingItem, setIsCreatingItem] = useState(false)
+  const [secretKey, setSecretKey] = useState<string>('')
 
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login')
     } else {
       loadVaults()
+      // 사용자 secretKey 로드
+      if (user?.id) {
+        const userSecretKey = loadUserSecretKey(user.id)
+        if (userSecretKey) {
+          setSecretKey(userSecretKey)
+        }
+      }
     }
   }, [])
 
@@ -142,6 +151,18 @@ function HomePage() {
   }
 
   const handleAddItem = () => {
+    if (!selectedVault) {
+      alert('먼저 Vault를 선택해주세요.')
+      return
+    }
+    
+    // secretKey가 없으면 설정 페이지로 이동
+    if (!secretKey) {
+      alert('시크릿 키가 설정되지 않았습니다. 설정 페이지에서 키를 생성해주세요.')
+      navigate('/settings')
+      return
+    }
+    
     setShowAddItemForm(true)
   }
 
@@ -149,17 +170,13 @@ function HomePage() {
     setShowAddItemForm(false)
   }
 
-  const handleSubmitItem = async (data: CreateVaultItemRequest) => {
-    setIsCreatingItem(true)
+  const handleSubmitItem = async (response: AddVaultItemResponseDto) => {
     try {
-      // TODO: API 호출로 vault item 생성
-      console.log('Creating vault item:', data)
-      
-      // 임시로 성공했다고 가정하고 폼 닫기
+      console.log('아이템 생성 완료:', response)
       alert('계정이 성공적으로 추가되었습니다!')
       setShowAddItemForm(false)
       
-      // TODO: vault item 목록 새로고침
+      // TODO: vault item 목록 새로고침 구현 예정
       
     } catch (error) {
       if (error instanceof Error) {
@@ -167,8 +184,6 @@ function HomePage() {
       } else {
         alert('계정 추가 중 오류가 발생했습니다.')
       }
-    } finally {
-      setIsCreatingItem(false)
     }
   }
 
@@ -374,6 +389,7 @@ function HomePage() {
                     {/* 아이템 추가 모달 */}
                     <AddAccountForm
                       vaultId={selectedVault.id}
+                      secretKey={secretKey}
                       onSubmit={handleSubmitItem}
                       onCancel={handleCancelAddItem}
                       isLoading={isCreatingItem}
@@ -483,6 +499,8 @@ function HomePage() {
           </div>
         </div>
       )}
+
+
     </div>
   )
 }

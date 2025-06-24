@@ -138,57 +138,6 @@ function Header({ title, handleLogout }: HeaderProps) {
               </div>
             </div>
           </div>
-
-          {/* 네비게이션 메뉴 */}
-          <div className="d-flex justify-content-center mt-3">
-            <div className="d-flex gap-2">
-              <Link
-                to="/"
-                className={`nav-link px-4 py-2 rounded-pill text-decoration-none fw-medium transition-all ${
-                  isActiveRoute('/') 
-                    ? 'bg-white text-primary' 
-                    : 'text-white hover-bg-white-20'
-                }`}
-                style={{
-                  background: isActiveRoute('/') ? 'white' : 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                🏠 홈
-              </Link>
-              <Link
-                to="/settings"
-                className={`nav-link px-4 py-2 rounded-pill text-decoration-none fw-medium transition-all ${
-                  isActiveRoute('/settings') 
-                    ? 'bg-white text-primary' 
-                    : 'text-white hover-bg-white-20'
-                }`}
-                style={{
-                  background: isActiveRoute('/settings') ? 'white' : 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                ⚙️ 설정
-              </Link>
-              <Link
-                to="/crypto-demo"
-                className={`nav-link px-4 py-2 rounded-pill text-decoration-none fw-medium transition-all ${
-                  isActiveRoute('/crypto-demo') 
-                    ? 'bg-white text-primary' 
-                    : 'text-white hover-bg-white-20'
-                }`}
-                style={{
-                  background: isActiveRoute('/crypto-demo') ? 'white' : 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                🔐 암호화 데모
-              </Link>
-            </div>
-          </div>
         </div>
       </nav>
 

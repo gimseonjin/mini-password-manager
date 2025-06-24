@@ -47,7 +47,7 @@ export class AddVaultItemRequestDto {
       iv: 'base64_encoded_initialization_vector_here',
       salt: 'base64_encoded_salt_here',
       kdf: 'Argon2id',
-      iterations: 100000
+      iterations: 100000,
     },
   })
   encryption: VaultEncryption;
@@ -85,7 +85,7 @@ export class VaultItemDto {
       iv: 'base64_encoded_initialization_vector_here',
       salt: 'base64_encoded_salt_here',
       kdf: 'Argon2id',
-      iterations: 100000
+      iterations: 100000,
     },
     nullable: true,
   })

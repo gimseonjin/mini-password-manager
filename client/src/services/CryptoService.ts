@@ -168,7 +168,7 @@ class CryptoService {
    */
   public static async encrypt(
     data: string,
-    password: string,
+    secretKey: string,
     options: EncryptionOptions = {}
   ): Promise<EncryptedData> {
     try {
@@ -177,7 +177,7 @@ class CryptoService {
       const iv = this.generateIV()
 
       // 키 생성
-      const key = await this.deriveKey(password, salt, options)
+      const key = await this.deriveKey(secretKey, salt, options)
 
       // 데이터 암호화
       const encryptedData = await this.encryptData(data, key, iv)
@@ -205,7 +205,7 @@ class CryptoService {
    */
   public static async decrypt(
     encryptedData: EncryptedData,
-    password: string
+    secretKey: string
   ): Promise<string> {
     try {
       const { data, metadata } = encryptedData
@@ -225,7 +225,7 @@ class CryptoService {
       const encrypted = this.base64ToArrayBuffer(data)
 
       // 키 생성 (저장된 파라미터 사용)
-      const key = await this.deriveKey(password, salt, {
+      const key = await this.deriveKey(secretKey, salt, {
         iterations: metadata.iterations
       })
 

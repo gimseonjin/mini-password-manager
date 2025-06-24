@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { VaultItemType, AccountData, CreateVaultItemRequest } from '../types/vault'
+import { addVaultItemWithEncryption } from '../services/VaultService'
+import { AddVaultItemResponseDto, AccountData, CreateVaultItemRequest, VaultItemType } from '../types/vault'
 import { EyeIcon, EyeSlashIcon, ShieldIcon } from './icons'
 
 interface AddAccountFormProps {
   vaultId: string
-  onSubmit: (data: CreateVaultItemRequest) => void
+  secretKey: string
+  onSubmit: (response: AddVaultItemResponseDto) => void
   onCancel: () => void
   isLoading?: boolean
   show: boolean
@@ -19,6 +21,7 @@ interface AccountFormData {
 
 const AddAccountForm: React.FC<AddAccountFormProps> = ({
   vaultId,
+  secretKey,
   onSubmit,
   onCancel,
   isLoading = false,
@@ -97,31 +100,37 @@ const AddAccountForm: React.FC<AddAccountFormProps> = ({
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!validateForm()) {
       return
     }
 
-    const accountData: AccountData = {
-      loginId: formData.loginId,
-      password: formData.password,
-      website: formData.website
+    try {
+      const accountData = {
+        username: formData.loginId,
+        password: formData.password,
+        website: formData.website,
+        notes: formData.notes || undefined
+      }
+
+      const title = extractDomainName(formData.website)
+
+      // 새로운 API 함수 사용
+      const response = await addVaultItemWithEncryption(
+        vaultId,
+        'login', // API 스펙의 type 필드
+        title,
+        accountData,
+        secretKey
+      )
+
+      onSubmit(response)
+    } catch (error) {
+      console.error('아이템 생성 실패:', error)
+      alert(error instanceof Error ? error.message : '아이템 생성에 실패했습니다.')
     }
-
-    const accountName = extractDomainName(formData.website)
-
-    const createRequest: CreateVaultItemRequest = {
-      vaultId,
-      type: VaultItemType.ACCOUNT,
-      name: accountName,
-      data: accountData,
-      favorite: false,
-      notes: formData.notes || undefined
-    }
-
-    onSubmit(createRequest)
   }
 
   const handleModalClose = (e?: React.MouseEvent) => {

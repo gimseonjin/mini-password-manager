@@ -143,23 +143,20 @@ export class VaultRepository {
   ): Promise<Vault> {
     const db = trx ?? this.databaseAdapter;
 
-    const prismaReadyItem: Prisma.vault_itemCreateInput = {
-      type: itemData.type,
-      title: itemData.title,
-      encryptedBlob: itemData.encryptedBlob,
-      encryption: itemData.encryption
-        ? (itemData.encryption as unknown as Prisma.InputJsonObject)
-        : Prisma.JsonNull,
-      vault: { connect: { id: vaultId } },
-    };
-
-    const vault = await db.vault.update({
-      where: { id: vaultId },
+    await db.vault_item.create({
       data: {
-        items: {
-          create: [prismaReadyItem],
-        },
+        type: itemData.type,
+        title: itemData.title,
+        encryptedBlob: itemData.encryptedBlob,
+        encryption: itemData.encryption
+          ? (itemData.encryption as unknown as Prisma.InputJsonObject)
+          : Prisma.JsonNull,
+        vault: { connect: { id: vaultId } },
       },
+    });
+
+    const vault = await db.vault.findUniqueOrThrow({
+      where: { id: vaultId },
       include: { items: true },
     });
 

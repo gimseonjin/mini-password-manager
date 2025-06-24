@@ -34,7 +34,7 @@ export interface VaultApiError {
   status: number
 }
 
-// 암호화 관련 타입 정의
+// 암호화 관련 타입 정의 (API 스펙에 맞춰 업데이트)
 export interface EncryptionMetadata {
   algorithm: 'AES-GCM'
   iv: string // base64 encoded initialization vector
@@ -52,6 +52,43 @@ export interface EncryptionOptions {
   iterations?: number // default: 100000
   memorySize?: number // default: 64MB for Argon2
   parallelism?: number // default: 1
+}
+
+// API 스펙에 맞는 새로운 타입들
+export interface AddVaultItemRequestDto {
+  type: string // 아이템 타입 (예: login, note, card)
+  title: string // 아이템 제목
+  encryptedBlob: string // 암호화된 데이터 블롭
+  encryption: {
+    algorithm: 'AES-GCM'
+    iv: string // base64 encoded initialization vector
+    salt: string // base64 encoded salt
+    kdf: 'Argon2id'
+    iterations: number
+  }
+}
+
+export interface VaultItemDto {
+  id: string // 아이템 ID
+  type: string // 아이템 타입
+  title: string // 아이템 제목
+  encryptedBlob: string // 암호화된 데이터 블롭
+  encryption: {
+    algorithm: 'AES-GCM'
+    iv: string // base64 encoded initialization vector
+    salt: string // base64 encoded salt
+    kdf: 'Argon2id'
+    iterations: number
+  } | null
+  createdAt: string // 생성 시간
+  updatedAt: string // 수정 시간
+}
+
+export interface AddVaultItemResponseDto {
+  id: string // Vault ID
+  createdAt: string // Vault 생성 시간
+  updatedAt: string // Vault 수정 시간
+  items: VaultItemDto[] // Vault 내 모든 아이템 목록
 }
 
 // Vault Item 관련 타입 정의
