@@ -92,13 +92,14 @@ export class VaultService {
    * Vault에 새 아이템을 추가한다.
    *
    * @param param0 - Vault 아이템 추가 정보 객체
+   *   - userId: 아이템을 추가할 Vault의 소유자 ID
    *   - vaultId: 아이템을 추가할 Vault의 ID
    *   - item: 추가할 아이템 정보
    * @returns 업데이트된 Vault 객체
    * @throws VaultNotFoundError - 지정한 Vault가 존재하지 않는 경우
    */
-  async addVaultItem({ vaultId, item }: AddVaultItem): Promise<Vault> {
-    const vault = await this.vaultRepository.findBy({ id: vaultId });
+  async addVaultItem({ userId, vaultId, item }: AddVaultItem): Promise<Vault> {
+    const vault = await this.vaultRepository.findBy({ id: vaultId, userId });
     if (!vault) {
       throw new VaultNotFoundError(vaultId);
     }

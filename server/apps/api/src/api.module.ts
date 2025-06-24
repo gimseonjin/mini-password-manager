@@ -5,9 +5,10 @@ import { TerminusModule } from '@nestjs/terminus';
 import { HttpModule } from '@nestjs/axios';
 import { UserController } from './user/user.controller';
 import { VaultController } from './vault/vault.controller';
+import { VaultItemController } from './vault/vault-item.controller';
 
 @Module({
   imports: [CoreModule, TerminusModule, HttpModule],
-  controllers: [ApiController, UserController, VaultController],
+  controllers: [ApiController, UserController, VaultController, VaultItemController],
 })
 export class ApiModule {}

@@ -175,6 +175,7 @@ describe('VaultService', () => {
   });
 
   it(`should add a new item to a vault`, async () => {
+    const userId = 'user-1';
     const vaultId = '1';
     const item = {
       type: 'note',
@@ -183,7 +184,7 @@ describe('VaultService', () => {
       encryption: null,
     };
 
-    const result = await service.addVaultItem({ vaultId, item });
+    const result = await service.addVaultItem({ userId, vaultId, item });
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -213,6 +214,7 @@ describe('VaultService', () => {
   });
 
   it('should throw an error if vault does not exist when adding an item', async () => {
+    const userId = 'user-1';
     const vaultId = '2';
     const item = {
       type: 'note',
@@ -221,8 +223,8 @@ describe('VaultService', () => {
       encryption: null,
     };
 
-    await expect(service.addVaultItem({ vaultId, item })).rejects.toThrow(
-      VaultNotFoundError,
-    );
+    await expect(
+      service.addVaultItem({ userId, vaultId, item }),
+    ).rejects.toThrow(VaultNotFoundError);
   });
 });
