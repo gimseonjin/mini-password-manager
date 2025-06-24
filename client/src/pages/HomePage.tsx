@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isLoggedIn, getCachedUser } from '../services/AuthService'
 import { createVault, getVaults, deleteVault } from '../services/VaultService'
-import { CreateVaultRequest, FetchVaultsResponse } from '../types/vault'
+import { CreateVaultRequest, CreateVaultItemRequest, FetchVaultsResponse } from '../types/vault'
 import { SettingsIcon, ShieldIcon } from '../components/icons'
+import AddAccountForm from '../components/AddVaultItemForm'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -18,6 +19,8 @@ function HomePage() {
   const [vaultsError, setVaultsError] = useState('')
   const [selectedVault, setSelectedVault] = useState<FetchVaultsResponse | null>(null)
   const [showVaultMenu, setShowVaultMenu] = useState<string | null>(null)
+  const [showAddItemForm, setShowAddItemForm] = useState(false)
+  const [isCreatingItem, setIsCreatingItem] = useState(false)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -136,6 +139,37 @@ function HomePage() {
   const toggleVaultMenu = (vaultId: string, event: React.MouseEvent) => {
     event.stopPropagation()
     setShowVaultMenu(showVaultMenu === vaultId ? null : vaultId)
+  }
+
+  const handleAddItem = () => {
+    setShowAddItemForm(true)
+  }
+
+  const handleCancelAddItem = () => {
+    setShowAddItemForm(false)
+  }
+
+  const handleSubmitItem = async (data: CreateVaultItemRequest) => {
+    setIsCreatingItem(true)
+    try {
+      // TODO: API 호출로 vault item 생성
+      console.log('Creating vault item:', data)
+      
+      // 임시로 성공했다고 가정하고 폼 닫기
+      alert('계정이 성공적으로 추가되었습니다!')
+      setShowAddItemForm(false)
+      
+      // TODO: vault item 목록 새로고침
+      
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(`오류: ${error.message}`)
+      } else {
+        alert('계정 추가 중 오류가 발생했습니다.')
+      }
+    } finally {
+      setIsCreatingItem(false)
+    }
   }
 
   // 메뉴 외부 클릭 시 닫기
@@ -316,7 +350,10 @@ function HomePage() {
                           <p className="text-muted small mb-0">{selectedVault.description}</p>
                         )}
                       </div>
-                      <button className="btn btn-primary btn-sm rounded-pill px-3">
+                      <button 
+                        className="btn btn-primary btn-sm rounded-pill px-3"
+                        onClick={handleAddItem}
+                      >
                         + 새 아이템 추가
                       </button>
                     </div>
@@ -333,6 +370,15 @@ function HomePage() {
                         <p className="text-muted small">첫 번째 비밀번호나 보안 정보를 추가해보세요!</p>
                       </div>
                     </div>
+
+                    {/* 아이템 추가 모달 */}
+                    <AddAccountForm
+                      vaultId={selectedVault.id}
+                      onSubmit={handleSubmitItem}
+                      onCancel={handleCancelAddItem}
+                      isLoading={isCreatingItem}
+                      show={showAddItemForm}
+                    />
                   </>
                 ) : (
                   <div className="text-center py-5">

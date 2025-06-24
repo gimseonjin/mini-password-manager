@@ -32,4 +32,96 @@ export interface FetchVaultsResponse {
 export interface VaultApiError {
   message: string
   status: number
+}
+
+// Vault Item 관련 타입 정의
+
+export enum VaultItemType {
+  ACCOUNT = 'ACCOUNT',
+  SECURE_NOTE = 'SECURE_NOTE',
+  CARD = 'CARD',
+  IDENTITY = 'IDENTITY'
+}
+
+export interface BaseVaultItem {
+  id?: string
+  vaultId: string
+  type: VaultItemType
+  name: string
+  favorite: boolean
+  folder?: string
+  notes?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface AccountData {
+  loginId: string
+  password: string
+  website: string
+  totp?: string
+}
+
+export interface SecureNoteData {
+  content: string
+}
+
+export interface CardData {
+  cardholderName: string
+  cardNumber: string
+  brand: string
+  expirationMonth: string
+  expirationYear: string
+  securityCode: string
+}
+
+export interface IdentityData {
+  title?: string
+  firstName: string
+  middleName?: string
+  lastName: string
+  address1?: string
+  address2?: string
+  city?: string
+  state?: string
+  postalCode?: string
+  country?: string
+  company?: string
+  email?: string
+  phone?: string
+}
+
+export type VaultItemData = AccountData | SecureNoteData | CardData | IdentityData
+
+export interface VaultItem extends BaseVaultItem {
+  data: VaultItemData
+}
+
+export interface CreateVaultItemRequest {
+  vaultId: string
+  type: VaultItemType
+  name: string
+  data: VaultItemData
+  favorite?: boolean
+  folder?: string
+  notes?: string
+}
+
+export interface CreateVaultItemResponse extends VaultItem {}
+
+export interface UpdateVaultItemRequest {
+  id: string
+  name?: string
+  data?: Partial<VaultItemData>
+  favorite?: boolean
+  folder?: string
+  notes?: string
+}
+
+export interface VaultItemFormData {
+  name: string
+  favorite: boolean
+  folder: string
+  notes: string
+  data: VaultItemData
 } 
